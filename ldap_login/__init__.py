@@ -91,6 +91,25 @@ class LDAPLoginManager(object):
             log.debug("Starting TLS")
             self.conn.start_tls_s()
 
+    def initialize_ldap_modules(self):
+        self.connect()
+
+        log.debug("Performing bind/search")
+        ctx = {'username': username, 'password': password}
+        user = self.config['BIND_DN'] % ctx
+
+        bind_auth = self.config['BIND_AUTH']
+        try:
+            log.debug("Binding with the BIND_DN %s" % user)
+            self.conn.simple_bind_s(user, bind_auth)
+
+        except ldap.INVALID_CREDENTIALS:
+            msg = "Could not connect bind with the BIND_DN=%s" % user
+            log.debug(msg)
+            if self._raise_errors:
+                raise ldap.INVALID_CREDENTIALS(msg)
+            return None
+
     def bind_search(self, username, password):
         """
         Bind to BIND_DN/BIND_AUTH then search for user to perform lookup.
