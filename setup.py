@@ -8,8 +8,8 @@ with open('LICENSE') as f:
     licenses = f.read()
 
 install_requires = [
-    'python-ldap',
-    'flask-login'
+    'flask',
+    'python-ldap'
 ]
 
 setup(
