@@ -15,7 +15,7 @@ connection_stack = _app_ctx_stack or _request_ctx_stack
 log = logging.getLogger(__name__)
 
 try:
-    from flask.ext.login import current_user
+    from flask_login import current_user
 except ImportError:
     current_user = None
 
@@ -44,34 +44,17 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-
         from ldap_login.controllers import mod_ldap_login as ldap_login_module
-        setattr(ldap_login_module, 'ldap_manager', self)
-        app.register_blueprint(ldap_login_module, **kwargs)
+        from ldap_login.manager import \
+            access as access_manager, \
+            admin as admin_manager, \
+            group as group_manager, \
+            review as review_manager
+        for module in [access_manager, admin_manager, group_manager, review_manager]:
+            setattr(module, 'ldap_manager', self)
+            app.register_blueprint(module, **kwargs)
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
-
-
-
-    def initialize_ldap_modules(self):
-        self.connect()
-
-        log.debug("Performing bind/search")
-        ctx = {'username': username, 'password': password}
-        user = self.config['BIND_DN'] % ctx
-
-        bind_auth = self.config['BIND_AUTH']
-        try:
-            log.debug("Binding with the BIND_DN %s" % user)
-            self.conn.simple_bind_s(user, bind_auth)
-
-        except ldap.INVALID_CREDENTIALS:
-            msg = "Could not connect bind with the BIND_DN=%s" % user
-            log.debug(msg)
-            if self._raise_errors:
-                raise ldap.INVALID_CREDENTIALS(msg)
-            return None
-
 
     def get_app(self, reference_app=None):
         """Helper method that implements the logic to look up an application.

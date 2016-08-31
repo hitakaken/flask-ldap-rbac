@@ -5,6 +5,24 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def scalar(value):
+    """
+    Take return a value[0] if `value` is a list of length 1
+    """
+    if isinstance(value, (list, tuple)) and len(value) == 1:
+        return value[0]
+    return value
+
+
+def _is_utf8(s):
+    try:
+        if isinstance(s, str):
+            us = s.decode('utf-8')
+        return True
+    except UnicodeDecodeError:
+        return False
+
+
 class LdapDriver(object):
     def __init__(self, config=None):
         self.conn = None
@@ -14,10 +32,38 @@ class LdapDriver(object):
         self.config.setdefault('BIND_AUTH', '')
         self.config.setdefault('URI', 'ldap://127.0.0.1')
 
+    def format_results(self, results):
+        """
+        将查询结果规范化
+        """
+        if not results:
+            return None
+        userdn = results[0][0]
+        userobj = results[0][1]
+        userobj['dn'] = userdn
+
+        keymap = self.config.get('KEY_MAP')
+        if keymap:
+            return {key: scalar(userobj.get(value)) for key, value in keymap.items() if
+                    _is_utf8(scalar(userobj.get(value)))}
+        else:
+            return {key: scalar(value) for key, value in userobj.items() if _is_utf8(scalar(value))}
+
     @property
     def config(self):
         """LDAP配置参数"""
         return self._config
+
+    @property
+    def attrlist(self):
+        """Transform the KEY_MAP paramiter into an attrlist for ldap filters"""
+        keymap = self.config.get('KEY_MAP')
+        if keymap:
+            # https://github.com/ContinuumIO/flask-ldap-login/issues/11
+            # https://continuumsupport.zendesk.com/agent/tickets/393
+            return [s.encode('utf-8') for s in keymap.values()]
+        else:
+            return None
 
     def set_raise_errors(self, state=True):
         """
@@ -136,3 +182,20 @@ class LdapDriver(object):
         else:
             result = self.direct_bind(username, password)
         return result
+
+    def initialize_rbac_models(self):
+        self.connect()
+
+        log.debug("Initialize RBAC Models ")
+        bind_dn = self.config['BIND_DN']
+        bind_auth = self.config['BIND_AUTH']
+        try:
+            log.debug("Binding with the BIND_DN %s" % bind_dn)
+            self.conn.simple_bind_s(bind_dn, bind_auth)
+
+        except ldap.INVALID_CREDENTIALS:
+            msg = "Could not connect bind with the BIND_DN=%s"
+            log.debug(msg)
+            if self._raise_errors:
+                raise ldap.INVALID_CREDENTIALS(msg)
+            return None
