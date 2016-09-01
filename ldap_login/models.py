@@ -53,32 +53,53 @@ def convert_dn_to_list(dn):
     return [n.split('=') for n in dn.split(',')]
 
 
-# https://github.com/apache/directory-fortress-core/blob/master/src/test/resources/init-ldap.ldif
+# Schema Name, Schema DN, Schema Description, objectClasses
+schemas = [
+    ('Config', 'ou=Config', 'Fortress People',
+     ['device', 'ftProperties']),
+    ('User', 'ou=People', 'Fortress People',
+     []),
+    ('Policy', 'ou=Policies', 'Fortress Policies',
+     []),
+    ('RBAC', 'ou=RBAC', 'Fortress RBAC Policies',
+     []),
+    ('Role', 'ou=Roles,ou=RBAC', 'Fortress Roles',
+     ['top', 'ftRls', 'ftProperties', 'ftMods']),
+    ('Permission', 'ou=Permissions,ou=RBAC', 'Fortress Permissions',
+     []),
+    ('Constraint', 'ou=Constraints,ou=RBAC', 'Fortress Separation of Duty Constraints',
+     []),
+    ('ARBAC', 'ou=ARBAC', 'Fortress Administrative RBAC Policies',
+     []),
+    ('OS-U', 'ou=OS-U,ou=ARBAC', 'Fortress User Organizational Units',
+     ['top', 'ftOrgUnit', 'ftMods']),
+    ('OS-P', 'ou=OS-P,ou=ARBAC', 'Fortress Perm Organizational Units',
+     ['top', 'ftOrgUnit', 'ftMods']),
+    ('AdminRole', 'ou=AdminRoles,ou=ARBAC', 'Fortress AdminRoles',
+     ['top', 'ftRls', 'ftProperties', 'ftPools', 'ftMods']),
+    ('AdminPerm', 'ou=AdminPerms,ou=ARBAC', 'Admin Permissions',
+     [])
+]
+
+
 def initialize(ldap_connection):
-    try:
-        ldap_connection.search_s(GLOBAL_BASE_DN, ldap.SCOPE_BASE, '(objectClass=*)')
-    except ldap.NO_SUCH_OBJECT:
-        modlist = [ #ldap.modlist.addModlist({
-            ('objectclass', ['top', 'domain']),
-            ('dc', convert_dn_to_list(GLOBAL_BASE_DN)[0][1]),
-            # ('o', GLOBAL_DESCRIPTION)
-        ] # })
-        print GLOBAL_BASE_DN, modlist
-        ldap_connection.add_s(GLOBAL_BASE_DN, modlist)
-    schemas = [
-        # Schema Name, Schema DN, Schema Description
-        ('Config', 'ou=Config', 'Fortress People'),
-        ('User', 'ou=People', 'Fortress People'),
-        ('Policy', 'ou=Policies', 'Fortress Policies'),
-        ('RBAC', 'ou=RBAC', 'Fortress RBAC Policies'),
-        ('Role', 'ou=Roles,ou=RBAC', 'Fortress Roles'),
-        ('Permission', 'ou=Permissions,ou=RBAC', 'Fortress Permissions'),
-        ('ARBAC', 'ou=ARBAC', 'Fortress Administrative RBAC Policies'),
-        ('OS-U', 'ou=OS-U,ou=ARBAC', 'Fortress User Organizational Units'),
-        ('OS-P', 'ou=OS-P,ou=ARBAC', 'Fortress Perm Organizational Units'),
-        ('AdminRole', 'ou=AdminRoles,ou=ARBAC', 'Fortress AdminRoles'),
-        ('AdminPerm', 'ou=AdminPerms,ou=ARBAC', 'Admin Permissions')
-    ]
+    # 初始化表
+    # https://github.com/apache/directory-fortress-core/blob/master/src/test/resources/init-ldap.ldif
+    # NOTICE: BASE_DN 必须存在
+    global schemas
+    for schema in schemas:
+        (name, prefix, description) = schema
+        dn = '%s,%s' % (prefix, GLOBAL_BASE_DN)
+        try:
+            ldap_connection.search_s(dn, ldap.SCOPE_BASE, '(objectClass=*)')
+        except ldap.NO_SUCH_OBJECT:
+            modlist = [  # ldap.modlist.addModlist({
+                ('objectClass', 'organizationalUnit'),
+                ('ou', convert_dn_to_list(prefix)[0][1]),
+                ('description', description)
+            ]  # })
+            print dn, modlist
+            ldap_connection.add_s(dn, modlist)
 
 
 class FortressEntity(object):
@@ -93,7 +114,6 @@ class User(FortressEntity):
 
     def __init__(self):
         pass
-
 
 
 class OrgUnit(object):
@@ -140,6 +160,3 @@ class PermissionObjectMixin(object):
 class Token(object):
     def __init__(self):
         pass
-
-
-
