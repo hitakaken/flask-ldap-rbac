@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 import ldap, ldap.schema
 import urllib
 import ldif
 import os
 from ldif import LDIFParser, LDIFWriter, LDIFRecordList
-from ldap_login.driver import get_schema
 from ldap_login.driver import LdapDriver
 from ldap_login import ldaphelper
 

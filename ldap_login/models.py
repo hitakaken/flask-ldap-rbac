@@ -1,25 +1,99 @@
 # -*- coding: utf-8 -*-
 import ldap
+import ldap.modlist
 import ldap.schema
+import operator
+
+# 全局变量
+GLOBAL_LDAP_URL = 'ldap://127.0.0.1'
+GLOBAL_OBJECT_CLASSES = {}
+GLOBAL_BASE_DN = 'dc=novbase,dc=com'
+GLOBAL_DESCRIPTION = 'NovBase Software'
 
 
-class Entity(object):
+def load_object_classes(schema_names):
+    """加载Schema Object Class"""
+    global GLOBAL_LDAP_URL, GLOBAL_OBJECT_CLASSES
+    subschema_subentry_dn, schema = ldap.schema.urlfetch(GLOBAL_LDAP_URL)
+    for schema_name in schema_names:
+        schema_attr_obj = schema.get_obj(ldap.schema.ObjectClass, schema_name)
+        if schema_attr_obj is not None:
+            GLOBAL_OBJECT_CLASSES[schema_name] = schema_attr_obj
+
+
+def get_object_classes(schema_names):
+    """根据对象名列表加载所有对象Schema"""
+    global GLOBAL_OBJECT_CLASSES
+    missing = set()
+    for schema_name in schema_names:
+        if schema_name not in GLOBAL_OBJECT_CLASSES:
+            missing.add(schema_name)
+    if len(missing) > 0:
+        load_object_classes(missing)
+    object_classes = set()
+    for schema_name in schema_names:
+        if schema_name in GLOBAL_OBJECT_CLASSES:
+            object_classes.add(GLOBAL_OBJECT_CLASSES[schema_name])
+    return object_classes
+
+
+def get_must_attributes(schema_names):
+    """返回所有必须属性"""
+    object_classes = get_object_classes(schema_names)
+    return list(reduce(operator.add, map(lambda obj: obj.must, object_classes)))
+
+
+def get_may_attributes(schema_names):
+    """返回所有可选属性"""
+    object_classes = get_object_classes(schema_names)
+    return list(reduce(operator.add, map(lambda obj: obj.may, object_classes)))
+
+
+def convert_dn_to_list(dn):
+    return [n.split('=') for n in dn.split(',')]
+
+
+# https://github.com/apache/directory-fortress-core/blob/master/src/test/resources/init-ldap.ldif
+def initialize(ldap_connection):
+    try:
+        ldap_connection.search_s(GLOBAL_BASE_DN, ldap.SCOPE_BASE, '(objectClass=*)')
+    except ldap.NO_SUCH_OBJECT:
+        modlist = [ #ldap.modlist.addModlist({
+            ('objectclass', ['top', 'domain']),
+            ('dc', convert_dn_to_list(GLOBAL_BASE_DN)[0][1]),
+            # ('o', GLOBAL_DESCRIPTION)
+        ] # })
+        print GLOBAL_BASE_DN, modlist
+        ldap_connection.add_s(GLOBAL_BASE_DN, modlist)
+    schemas = [
+        # Schema Name, Schema DN, Schema Description
+        ('Config', 'ou=Config', 'Fortress People'),
+        ('User', 'ou=People', 'Fortress People'),
+        ('Policy', 'ou=Policies', 'Fortress Policies'),
+        ('RBAC', 'ou=RBAC', 'Fortress RBAC Policies'),
+        ('Role', 'ou=Roles,ou=RBAC', 'Fortress Roles'),
+        ('Permission', 'ou=Permissions,ou=RBAC', 'Fortress Permissions'),
+        ('ARBAC', 'ou=ARBAC', 'Fortress Administrative RBAC Policies'),
+        ('OS-U', 'ou=OS-U,ou=ARBAC', 'Fortress User Organizational Units'),
+        ('OS-P', 'ou=OS-P,ou=ARBAC', 'Fortress Perm Organizational Units'),
+        ('AdminRole', 'ou=AdminRoles,ou=ARBAC', 'Fortress AdminRoles'),
+        ('AdminPerm', 'ou=AdminPerms,ou=ARBAC', 'Admin Permissions')
+    ]
+
+
+class FortressEntity(object):
     objectclass = ['ftMods']
 
-    def __init__(self, objectclass=None):
-        if objectclass is None:
-            objectclass = []
-        self.objectclass = Entity.objectclass.append(objectclass)
-
-    def add(self, l):
-        l.add_s(self)
+    def __init__(self, **kwargs):
+        pass
 
 
-class User(Entity):
+class User(FortressEntity):
     objectclass = ['inetOrgPerson', 'organizationalPerson', 'ftProperties', 'ftUserAttrs', 'ftMods']
 
     def __init__(self):
         pass
+
 
 
 class OrgUnit(object):
@@ -68,11 +142,4 @@ class Token(object):
         pass
 
 
-def initialize(uri):
-    subschemasubentry_dn, schema = ldap.schema.urlfetch(uri)
-    ftMods = schema.get_obj(ldap.schema.ObjectClass, 'ftProperties')
-    if not ftMods is None:
-        print ftMods.must, ftMods.may
 
-
-initialize('ldap://127.0.0.1')
