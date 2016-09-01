@@ -10,7 +10,8 @@ with open('LICENSE') as f:
 install_requires = [
     'flask',
     'python-ldap',
-    'PyJWT'
+    'PyJWT',
+    'flask-restplus'
 ]
 
 setup(
