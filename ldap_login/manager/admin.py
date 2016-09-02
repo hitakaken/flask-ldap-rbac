@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+from ldap_login.models import users
+
+
 def add_user(user):
-    pass
+    if not users.exists(user):
+        return users.create(user)
+    raise UserWarning
 
 
 def disable_user(user):

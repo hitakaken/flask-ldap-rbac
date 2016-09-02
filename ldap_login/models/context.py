@@ -51,3 +51,4 @@ def get_may_attributes(schema_names):
 
 def convert_dn_to_list(dn):
     return [n.split('=') for n in dn.split(',')]
+
