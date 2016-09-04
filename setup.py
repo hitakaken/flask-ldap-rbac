@@ -11,7 +11,9 @@ install_requires = [
     'flask',
     'python-ldap',
     'PyJWT',
-    'flask-restplus'
+    'flask-restplus',
+    'flatdict',
+    'bson'
 ]
 
 setup(

@@ -3,11 +3,14 @@ import ldap
 import ldap.modlist
 import ldap.schema
 import operator
+from .base import LDAP_CONNECTION, BASE_DN, \
+    VALID_ATTR_NAMES, MUST_ATTR_NAMES, MAY_ATTR_NAMES, \
+    get_by_dn, add_entry, BranchEntity
+from .users import User
 
 # 全局变量
 GLOBAL_LDAP_URL = 'ldap://127.0.0.1'
 GLOBAL_OBJECT_CLASSES = {}
-GLOBAL_BASE_DN = 'dc=novbase,dc=com'
 GLOBAL_DESCRIPTION = 'NovBase Software'
 
 
@@ -51,4 +54,25 @@ def get_may_attributes(schema_names):
 
 def convert_dn_to_list(dn):
     return [n.split('=') for n in dn.split(',')]
+
+
+def register_entity_class(entity_class):
+    """注册实体对象类"""
+    dn = '%s,%s' % (entity_class.branch_part, BASE_DN)
+    branch_entity = get_by_dn(LDAP_CONNECTION, dn, BranchEntity)
+    class_name = entity_class.__name__
+    if branch_entity is None:
+        branch_entity = BranchEntity(class_name, attrs={'description': entity_class.description})
+        add_entry(LDAP_CONNECTION, branch_entity)
+    MUST_ATTR_NAMES[class_name] = get_must_attributes(entity_class.object_class)
+    MAY_ATTR_NAMES[class_name] = get_may_attributes(entity_class.object_class)
+    VALID_ATTR_NAMES[class_name] = list(set(MUST_ATTR_NAMES[class_name] + MAY_ATTR_NAMES[class_name]))
+
+
+def initialize(ldap_config):
+    """初始化上下文"""
+    entity_classes = [User]
+    schema_names = list(reduce(operator.add, map(lambda entity_class: entity_class.object_class, entity_classes)))
+    load_object_classes(schema_names)
+    register_entity_class(User)
 
