@@ -219,14 +219,14 @@ class LdapConnection(object):
         result = None
         if entity.dn is not None:
             result = GLOBAL_LDAP_CONNECTION.get_by_dn(entity.dn, entity.__class__)
-        if result is not None and entity.idx_field is not None and entity.idx_value is not None:
+        if result is None and entity.idx_field is not None and entity.idx_value is not None:
             result = GLOBAL_LDAP_CONNECTION.get_by_dn(
                 entity.dn_template % (
                     entity.idx_field,
                     entity.idx_value,
                     entity.branch_part,
                     GLOBAL_LDAP_CONFIG.BASE_DN), entity.__class__)
-        if result is not None and 'ftId' in entity.attrs and entity.attrs['ftId'] is not None:
+        if result is None and 'ftId' in entity.attrs and entity.attrs['ftId'] is not None:
             result = self.search(
                 entity.branch_dn_template % (entity.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN),
                 entity.__class__,

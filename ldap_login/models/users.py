@@ -17,8 +17,9 @@ def find(user):
     if isinstance(user, dict):
         user = User(attrs=user)
     result = GLOBAL_LDAP_CONNECTION.find(user)
-
     return result
+
+
 
 
 def add_user(user):

@@ -18,7 +18,7 @@ class FortEntity(LdapEntity):
             attrs.update({'objectClass': self.__class__.object_class})
         if dn is None and self.__class__.idx_field in attrs:
             dn = attrs[self.__class__.idx_field]
-        if '=' not in dn:
+        if dn is not None and '=' not in dn:
             dn = self.__class__.dn_template % (
                 self.__class__.idx_field,
                 dn,
