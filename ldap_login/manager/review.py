@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from flask import Blueprint
+
+review_manager = Blueprint('ldap_login', __name__)
+
 def assigned_roles(user):
     pass
 

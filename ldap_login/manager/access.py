@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+from flask import Blueprint
+
+access_manager = Blueprint('accessMgr', __name__)
+
+
+@access_manager.route('/authenticate')
 def authenticate(username, password):
     pass
 

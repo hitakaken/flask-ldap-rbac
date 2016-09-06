@@ -13,6 +13,7 @@ install_requires = [
     'PyJWT',
     'flask-restplus',
     'flatdict',
+    'bidict',
     'bson'
 ]
 

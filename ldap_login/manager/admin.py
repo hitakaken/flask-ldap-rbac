@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from ldap_login.models import users
+from flask import Blueprint
+
+admin_manager = Blueprint('ldap_login', __name__)
 
 
 def add_user(user):
-    if not users.exists(user):
+    if not users.read(user):
         return users.create(user)
     raise UserWarning
 

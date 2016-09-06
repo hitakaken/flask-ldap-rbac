@@ -2,10 +2,11 @@
 from abc import ABCMeta, abstractmethod
 from bson.objectid import ObjectId
 import datetime as dt
-import flatdict
+from bidict import bidict
 from ldap.cidict import cidict
 import ldap
 import ldap.schema
+import ldap.modlist as modlist
 import operator
 from uuid import UUID
 
@@ -91,7 +92,9 @@ class LdapEntity(object):
     idx_field = 'cn'
     idx_value = None
     attrs = {}
+    cached_attrs = {}
     object_class = []
+    mapping = bidict()
 
     def __init__(self, dn=None, attrs=None):
         self.dn = dn
@@ -103,7 +106,7 @@ class LdapEntity(object):
             self.idx_field = self.__class__.idx_field
         if attrs is None:
             attrs = {}
-        self.attrs = cidict({k: v for k, v in attrs.iteritems()
+        self.attrs = cidict({k if k not in self.mapping.inv else self.mapping.inv[k]: v for k, v in attrs.iteritems()
                              if k.lower() != self.idx_field.lower() and k.lower() != 'objectclass'})
 
     def is_ldap_attr(self, attr_name):
@@ -112,6 +115,8 @@ class LdapEntity(object):
         )
 
     def __getattr__(self, attr_name):
+        if attr_name in self.mapping.inv:
+            attr_name = self.mapping.inv[attr_name]
         if attr_name.lower() == 'objectclass':
             return self.object_class
         elif attr_name.lower() == self.idx_field.lower():
@@ -124,7 +129,10 @@ class LdapEntity(object):
             raise AttributeError
 
     def __setattr__(self, key, value):
-        if key in self.__dict__ or key in ['dn', 'object_class', 'idx_field', 'idx_value', 'attrs']:
+        if key in self.mapping.inv:
+            key = self.mapping.inv[key]
+        if key in self.__dict__ or key in [
+            'dn', 'object_class', 'idx_field', 'idx_value', 'attrs', 'cached_attrs']:
             self.__dict__[key] = value
         elif key.lower() == 'objectclass':
             self.object_class = value
@@ -144,6 +152,23 @@ class LdapEntity(object):
         if not dn:
             return None
         return cls(dn=dn, attrs=attrs)
+
+    def cache_attrs(self):
+        self.cached_attrs = self.attrs.copy()
+
+    def update(self, attrs):
+        for k, v in attrs.iteritems():
+            setattr(self, k, v)
+        return self
+
+    def add_modlist(self):
+        modlist = [(self.idx_field, self.idx_value), ('objectClass', self.object_class)]
+        for k, v in self.attrs.iteritems():
+            modlist.append((k, v))
+        return modlist
+
+    def modify_modlist(self):
+        return modlist.modifyModlist(self.cached_attrs, self.attrs)
 
 
 class BranchEntity(LdapEntity):
@@ -212,25 +237,23 @@ class LdapConnection(object):
                 self.end()
             return None
 
-    def find(self, entity):
+    def find(self, entry):
         binding = self.binding
         if not binding:
             self.begin()
         result = None
-        if entity.dn is not None:
-            result = GLOBAL_LDAP_CONNECTION.get_by_dn(entity.dn, entity.__class__)
-        if result is None and entity.idx_field is not None and entity.idx_value is not None:
-            result = GLOBAL_LDAP_CONNECTION.get_by_dn(
-                entity.dn_template % (
-                    entity.idx_field,
-                    entity.idx_value,
-                    entity.branch_part,
-                    GLOBAL_LDAP_CONFIG.BASE_DN), entity.__class__)
-        if result is None and 'ftId' in entity.attrs and entity.attrs['ftId'] is not None:
+        if entry.dn is None and entry.idx_field is not None and entry.idx_value is not None:
+            entry.dn = entry.dn_template % (entry.idx_field, entry.idx_value, entry.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN)
+        if entry.dn is not None:
+            result = self.conn.search_s(entry.dn, ldap.SCOPE_BASE, '(objectClass=*)')
+            if len(result) > 0:
+                result = result[0]
+                result = entry.__class__.parse(result)
+        if result is None and 'ftId' in entry.attrs and entry.attrs['ftId'] is not None:
             result = self.search(
-                entity.branch_dn_template % (entity.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN),
-                entity.__class__,
-                filters='ftId=%s' % entity.attrs['ftId']
+                entry.branch_dn_template % (entry.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN),
+                entry.__class__,
+                filters='ftId=%s' % entry.attrs['ftId']
             )
             if result is not None and len(result) > 0:
                 result = result[0]
@@ -238,6 +261,8 @@ class LdapConnection(object):
                 result = None
         if not binding:
             self.end()
+        if result is not None:
+            result.cache_attrs()
         return result
 
     def search(self, base_dn, entity_class, filters=None):
@@ -277,10 +302,7 @@ class LdapConnection(object):
                     and must_attr_name.lower() != 'objectclass' \
                     and must_attr_name not in entry.attrs:
                 raise ldap.OBJECT_CLASS_VIOLATION('Missing Attribute: %s' % must_attr_name)
-        modlist = [(entry.idx_field, entry.idx_value), ('objectClass', entry.object_class)]
-        for k, v in entry.attrs.iteritems():
-            modlist.append((k, v))
-        self.conn.add_s(entry.dn, modlist)
+        self.conn.add_s(entry.dn, entry.add_modlist())
         if not binding:
             self.end()
         return self
@@ -289,10 +311,7 @@ class LdapConnection(object):
         binding = self.binding
         if not binding:
             self.begin()
-        modlist = [(entry.idx_field, entry.idx_value), ('objectClass', entry.object_class)]
-        for k, v in entry.attrs.iteritems():
-            modlist.append((k, v))
-        self.conn.mod_s(entry.dn, modlist)
+        self.conn.modify_s(entry.dn, entry.modify_modlist())
         if not binding:
             self.end()
         return self

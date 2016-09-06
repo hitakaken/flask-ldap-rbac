@@ -3,4 +3,5 @@ python-ldap
 PyJWT
 flask-restplus
 flatdict
+bidict
 bson

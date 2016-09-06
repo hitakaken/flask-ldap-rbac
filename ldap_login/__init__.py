@@ -34,9 +34,9 @@ class LDAPLoginManager(object):
         self.acl = AccessControlList()
         self.before_acl = {'allow': [], 'deny': []}
 
-        self._role_model = kwargs.get('role_model', RoleMixin)
-        self._user_model = kwargs.get('user_model', UserMixin)
-        self._user_loader = kwargs.get('user_loader', lambda: current_user)
+        # self._role_model = kwargs.get('role_model', RoleMixin)
+        # self._user_model = kwargs.get('user_model', UserMixin)
+        # self._user_loader = kwargs.get('user_loader', lambda: current_user)
 
         if app is not None:
             self.app = app
@@ -44,14 +44,11 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-        from ldap_login.controllers import mod_ldap_login as ldap_login_module
-        from ldap_login.manager import \
-            access as access_manager, \
-            admin as admin_manager, \
-            group as group_manager, \
-            review as review_manager
+        from ldap_login.manager.access import access_manager
+        from ldap_login.manager.admin import admin_manager
+        from ldap_login.manager.group import group_manager
+        from ldap_login.manager.review import review_manager
         for module in [access_manager, admin_manager, group_manager, review_manager]:
-            setattr(module, 'ldap_manager', self)
             app.register_blueprint(module, **kwargs)
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
