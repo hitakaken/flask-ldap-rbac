@@ -98,14 +98,14 @@ class LdapEntity(object):
 
     def __init__(self, dn=None, attrs=None):
         self.dn = dn
+        if attrs is None:
+            attrs = {}
         self.object_class = attrs.get('objectClass', self.__class__.object_class)
         if dn is not None and '=' in dn:
             self.idx_field = dn[:dn.index('=')]
             self.idx_value = dn[dn.index('=') + 1:dn.index(',')]
         else:
             self.idx_field = self.__class__.idx_field
-        if attrs is None:
-            attrs = {}
         self.attrs = cidict({k if k not in self.mapping.inv else self.mapping.inv[k]: v for k, v in attrs.iteritems()
                              if k.lower() != self.idx_field.lower() and k.lower() != 'objectclass'})
 
@@ -182,6 +182,7 @@ class BranchEntity(LdapEntity):
 class LdapConnection(object):
     def __init__(self, ldap_config=None):
         self.conn = None
+        self.auth_conn = None
         self.root_dn = None
         self.root_pw = None
         self.binding = False
@@ -200,10 +201,14 @@ class LdapConnection(object):
                     ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, options['CACERTFILE'])
         GLOBAL_LDAP_CONFIG.LDAP_URL = ldap_config.get('URI', GLOBAL_LDAP_CONFIG.LDAP_URL)
         self.conn = ldap.initialize(GLOBAL_LDAP_CONFIG.LDAP_URL, trace_level=ldap_config.get('TRACE_LEVEL', 1))
+        self.auth_conn = ldap.initialize(GLOBAL_LDAP_CONFIG.LDAP_URL)
         self.conn.protocol_version = ldap.VERSION3
+        self.auth_conn.protocol_version = ldap.VERSION3
         self.conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+        self.auth_conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
         if ldap_config.get('START_TLS', False):
             self.conn.start_tls_s()
+            self.auth_conn.start_tls_s()
         self.root_dn = ldap_config['ROOT_DN']
         self.root_pw = ldap_config['ROOT_PW']
         GLOBAL_LDAP_CONFIG.BASE_DN = ldap_config.get('BASE_DN', GLOBAL_LDAP_CONFIG.BASE_DN)
@@ -218,24 +223,14 @@ class LdapConnection(object):
         self.binding = False
         return self
 
-    def get_by_dn(self, dn, entity_class):
-        binding = self.binding
-        if not binding:
-            self.begin()
+    def authenticate(self, user_dn, password):
+        authenticate = False
         try:
-            ldap_entity = self.conn.search_s(dn, ldap.SCOPE_BASE, '(objectClass=*)')
-            if len(ldap_entity) == 0:
-                raise ldap.NO_SUCH_OBJECT
-            ldap_entity = ldap_entity[0]
-            if entity_class is None:
-                entity_class = LdapEntity
-            if not binding:
-                self.end()
-            return entity_class.parse(ldap_entity)
-        except ldap.NO_SUCH_OBJECT:
-            if not binding:
-                self.end()
-            return None
+            self.auth_conn.simple_bind_s(user_dn, password)
+            authenticate = True
+        except ldap.INVALID_CREDENTIALS:
+            pass
+        return authenticate
 
     def find(self, entry):
         binding = self.binding
@@ -354,7 +349,7 @@ class LdapConnection(object):
         if not binding:
             self.begin()
         dn = entity_class.branch_dn_template % (entity_class.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN)
-        branch_entity = self.get_by_dn(dn, BranchEntity)
+        branch_entity = self.find(BranchEntity(dn=dn))
         class_name = entity_class.__name__
         if branch_entity is None:
             branch_entity = BranchEntity(dn, attrs={

@@ -4,7 +4,7 @@ from flask import Blueprint
 access_manager = Blueprint('accessMgr', __name__)
 
 
-@access_manager.route('/authenticate')
+@access_manager.route('/authn')
 def authenticate(username, password):
     pass
 

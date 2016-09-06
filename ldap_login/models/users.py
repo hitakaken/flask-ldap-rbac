@@ -44,3 +44,8 @@ def update(user):
 def delete(user):
     if isinstance(user, dict):
         user = User(attrs=user)
+
+
+def authenticate(user_id, password):
+    user = User(attrs={'uid': 'kcao'})
+    print GLOBAL_LDAP_CONNECTION.authenticate(user.dn, password)

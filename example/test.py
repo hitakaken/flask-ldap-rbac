@@ -16,4 +16,10 @@ user = {
 }
 users.update(user)
 user = users.read({'uid': 'kcao'})
+users.authenticate('kcao', 'kenshin77')
+users.update({
+    'ftId': 'dca76401-7442-11e6-94a3-6165a020b7a2',
+    'userPassword': 'kenshin77',
+})
+users.authenticate('kcao', 'kenshin77')
 print user.attrs
