@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
-from .base import LDAP_CONNECTION, BASE_DN, FortEntityWithProperties, get_by_dn
+from .base import FortEntityWithProperties
+from .helper import GLOBAL_LDAP_CONNECTION
 
 
 class User(FortEntityWithProperties):
     object_class = ['top', 'inetOrgPerson', 'ftUserAttrs', 'ftProperties', 'ftMods', 'extensibleObject']
-    idx_field = 'cn'
+    idx_field = 'uid'
     branch_part = 'ou=People'
-    branch_class = 'organizationalUnit'
     branch_description = 'Fortress People'
 
-    def __init__(self, dn, attrs=None):
-        if attrs is None:
-            attrs = {}
-        if 'objectClass' not in attrs:
-            attrs.update({'objectClass': User.object_class})
-        if dn is None and User.idx_field in attrs:
-            dn = attrs[User.idx_field]
-        if dn.index('=') < 0:
-            dn = '%s=%s,%s,%s' % (User.idx_field, dn, User.branch_part, BASE_DN)
-        super(User, self).__init__(dn, attrs)
+    def __init__(self, dn=None, attrs=None):
+        super(User, self).__init__(dn=dn, attrs=attrs)
 
 
-def exists(user):
-    return get_by_dn(LDAP_CONNECTION, user.dn, User) is not None
+def find(user):
+    if isinstance(user, dict):
+        user = User(attrs=user)
+    result = GLOBAL_LDAP_CONNECTION.find(user)
+
+    return result
 
 
+def add_user(user):
+    if isinstance(user, dict):
+        user = User(attrs=user)
+    if 'sn' not in user.attrs:
+        user.attrs['sn'] = user.idx_value
+    GLOBAL_LDAP_CONNECTION.add_entry(user)
