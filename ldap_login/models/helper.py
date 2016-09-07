@@ -168,6 +168,7 @@ class LdapEntity(object):
         modlist = [(self.idx_field, self.idx_value), ('objectClass', self.object_class)]
         for k, v in self.attrs.iteritems():
             modlist.append((k, v))
+        print modlist
         return modlist
 
     def modify_modlist(self):
@@ -234,8 +235,11 @@ class LdapConnection(object):
         if entry.dn is None and entry.idx_field is not None and entry.idx_value is not None:
             entry.dn = entry.dn_template % (entry.idx_field, entry.idx_value, entry.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN)
         if entry.dn is not None:
-            result = self.conn.search_s(entry.dn, ldap.SCOPE_BASE, '(objectClass=*)')
-            if len(result) > 0:
+            try:
+                result = self.conn.search_s(entry.dn, ldap.SCOPE_BASE, '(objectClass=*)')
+            except ldap.NO_SUCH_OBJECT:
+                result = None
+            if result is not None and len(result) > 0:
                 result = result[0]
                 result = entry.__class__.parse(result)
         for field in entry.id_attr_names:

@@ -45,10 +45,17 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-        api = Api(title='My Title',
-                  version='2.0',
-                  description='A description', )
         context.initialize(app.config['LDAP'])
+
+        def get_secret(content, ext=None):
+            return app.config.get('JWT', {}).get('secrect', 'secret')
+
+        def get_algorithm(content, ext=None):
+            return app.config.get('JWT', {}).get('algorithm', 'HS256')
+
+        setattr(context, 'get_secret', get_secret)
+        setattr(context, 'get_algorithm', get_algorithm)
+
         from ldap_login.manager.access import access_manager
         from ldap_login.manager.admin import admin_manager
         from ldap_login.manager.group import group_manager
@@ -57,7 +64,6 @@ class LDAPLoginManager(object):
                        # admin_manager, group_manager, review_manager
                        ]:
             app.register_blueprint(module, **kwargs)
-        self.api = api
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
 
@@ -74,6 +80,12 @@ class LDAPLoginManager(object):
         raise RuntimeError('application not registered on rbac '
                            'instance and no application bound '
                            'to current context')
+
+    def get_secret(self, func):
+        setattr(context, 'get_secret', func)
+
+    def get_algorithm(self, func):
+        setattr(context, 'get_algorithm', func)
 
     def _authenticate(self):
         app = self.get_app()

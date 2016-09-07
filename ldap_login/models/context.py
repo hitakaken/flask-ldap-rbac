@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import jwt
+from ldap_login import exceptions
 from ldap_login.models.helper import GLOBAL_LDAP_CONNECTION
 from ldap_login.models.base import Config
 from ldap_login.models.users import User
@@ -22,21 +24,41 @@ def initialize(ldap_config):
         GLOBAL_LDAP_CONNECTION.register_entity_class(entity_class)
     GLOBAL_LDAP_CONNECTION.end()
 
-namespace = Namespace('User', description='用户管理接口')
-credential_model = reqparse.RequestParser()
-credential_model.add_argument('name', location='form', help='用户名/邮箱/手机号', )
-credential_model.add_argument('password', location='form', type='password', help='密码', )
+get_secret = None
+get_algorithm = None
 
-user_model = namespace.model('User', {
+
+def encode(content, ext=None):
+    secret = 'secret' if get_secret is None else get_secret(content, ext=ext)
+    algorithm = 'HS256' if get_algorithm is None else get_algorithm(content, ext=ext)
+    return jwt.encode(content, secret, algorithm=algorithm)
+
+
+def decode(content, ext=None):
+    secret = 'secret' if get_secret is None else get_secret(content, ext=ext)
+    algorithm = 'HS256' if get_algorithm is None else get_algorithm(content, ext=ext)
+    return jwt.decode(content, secret, algorithms=[algorithm])
+
+
+namespace = Namespace('User', description='用户管理接口')
+error = namespace.model('Error', {
+    'message': fields.String,
+})
+credential = reqparse.RequestParser()
+credential.add_argument('name', location='form', help='用户名/邮箱/手机号', )
+credential.add_argument('password', location='form', type='password', help='密码', )
+user = namespace.model('User', {
     'name': fields.String
 })
-token_model = namespace.model('Token', {
+token = namespace.model('Token', {
     'token': fields.String(required=True, description='身份令牌'),
+    'user': fields.Nested(user),
     'base': fields.String,
     'admin': fields.String,
     'expired': fields.Integer
 })
-role_model = namespace.model('Role', {
+role = namespace.model('Role', {
     'name': fields.String
 })
+
 
