@@ -94,6 +94,8 @@ class LdapEntity(object):
     attrs = {}
     cached_attrs = {}
     object_class = []
+    id_attr_names = ['ftId']
+    ignore_modify_attr_types = ['userPassword']
     mapping = bidict()
 
     def __init__(self, dn=None, attrs=None):
@@ -111,7 +113,8 @@ class LdapEntity(object):
 
     def is_ldap_attr(self, attr_name):
         return attr_name is not None and (
-            attr_name in self.attrs or attr_name in GLOBAL_LDAP_CONFIG.VALID_ATTR_NAMES.get(self.__class__.__name__, {})
+            attr_name in self.attrs
+            or attr_name.lower() in GLOBAL_LDAP_CONFIG.VALID_ATTR_NAMES.get(self.__class__.__name__, [])
         )
 
     def __getattr__(self, attr_name):
@@ -168,7 +171,7 @@ class LdapEntity(object):
         return modlist
 
     def modify_modlist(self):
-        return modlist.modifyModlist(self.cached_attrs, self.attrs)
+        return modlist.modifyModlist(self.cached_attrs, self.attrs, ignore_attr_types=self.ignore_modify_attr_types)
 
 
 class BranchEntity(LdapEntity):
@@ -223,15 +226,6 @@ class LdapConnection(object):
         self.binding = False
         return self
 
-    def authenticate(self, user_dn, password):
-        authenticate = False
-        try:
-            self.auth_conn.simple_bind_s(user_dn, password)
-            authenticate = True
-        except ldap.INVALID_CREDENTIALS:
-            pass
-        return authenticate
-
     def find(self, entry):
         binding = self.binding
         if not binding:
@@ -244,16 +238,23 @@ class LdapConnection(object):
             if len(result) > 0:
                 result = result[0]
                 result = entry.__class__.parse(result)
-        if result is None and 'ftId' in entry.attrs and entry.attrs['ftId'] is not None:
-            result = self.search(
-                entry.branch_dn_template % (entry.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN),
-                entry.__class__,
-                filters='ftId=%s' % entry.attrs['ftId']
-            )
-            if result is not None and len(result) > 0:
-                result = result[0]
-            else:
-                result = None
+        for field in entry.id_attr_names:
+            if result is not None:
+                break
+            if field in entry.attrs and entry.attrs[field] is not None:
+                values = entry.attrs[field] if isinstance(entry.attrs[field], list) else [entry.attrs[field]]
+                for value in values:
+                    if result is not None:
+                        break
+                    result = self.search(
+                        entry.branch_dn_template % (entry.branch_part, GLOBAL_LDAP_CONFIG.BASE_DN),
+                        entry.__class__,
+                        filters='%s=%s' % (field, value)
+                    )
+                    if result is not None and len(result) > 0:
+                        result = result[0]
+                    else:
+                        result = None
         if not binding:
             self.end()
         if result is not None:
@@ -357,9 +358,13 @@ class LdapConnection(object):
                 'description': entity_class.branch_description
             })
             self.add_entry(branch_entity)
-        GLOBAL_LDAP_CONFIG.MUST_ATTR_NAMES[class_name] = self.get_must_attributes(entity_class.object_class)
+        GLOBAL_LDAP_CONFIG.MUST_ATTR_NAMES[class_name] = map(
+            str.lower,
+            self.get_must_attributes(entity_class.object_class))
         # print class_name, entity_class.object_class, GLOBAL_LDAP_CONFIG.MUST_ATTR_NAMES[class_name]
-        GLOBAL_LDAP_CONFIG.MAY_ATTR_NAMES[class_name] = self.get_may_attributes(entity_class.object_class)
+        GLOBAL_LDAP_CONFIG.MAY_ATTR_NAMES[class_name] = map(
+            str.lower,
+            self.get_may_attributes(entity_class.object_class))
         GLOBAL_LDAP_CONFIG.VALID_ATTR_NAMES[class_name] = list(
             set(GLOBAL_LDAP_CONFIG.MUST_ATTR_NAMES[class_name] + GLOBAL_LDAP_CONFIG.MAY_ATTR_NAMES[class_name])
         )

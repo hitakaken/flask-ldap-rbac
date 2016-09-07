@@ -18,7 +18,7 @@ install_requires = [
 ]
 
 setup(
-    name='flask-ldap-login',
+    name='flask-ldap-rbac',
     version='0.0.1',
     description='基于LDAP的用户认证 Flask Blueprint',
     long_description=readme,

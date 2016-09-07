@@ -1,12 +1,27 @@
 # -*- coding: utf-8 -*-
+# https://directory.apache.org/fortress/gen-docs/1.0.1/apidocs/org/apache/directory/fortress/core/AccessMgr.html
 from flask import Blueprint
+from flask_restplus import Api, Namespace, Resource, fields
+from ldap_login.models import context
 
 access_manager = Blueprint('accessMgr', __name__)
+api = Api(
+    access_manager,
+    title='Access Manager',
+    version='1.0',
+    description=''
+)
+api.add_namespace(context.namespace)
 
 
-@access_manager.route('/authn')
-def authenticate(username, password):
-    pass
+@api.route('/access/authn')
+class authenticate(Resource):
+    @api.expect(context.credential_model)
+    @api.marshal_with(context.token_model)
+    def post(self):
+        return {
+            'token': 'afdsafasd'
+        }
 
 
 def create_token(user, trusted=True):

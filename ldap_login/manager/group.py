@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint
 
-group_manager = Blueprint('ldap_login', __name__)
+group_manager = Blueprint('groupMgr', __name__)
 
 
 def add_group(group):

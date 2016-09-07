@@ -8,18 +8,20 @@ context.initialize(settings.LDAP)
 #                 'emails': ['kcao@libnet.sh.cn', 'hitakaken@gmail.com'], 'mobiles': ['13651649647']})
 
 # user = users.find({'ftId': 'b370de80-7416-11e6-b3d5-811ad2761c64'})
-user = users.read({'ftId': 'dca76401-7442-11e6-94a3-6165a020b7a2'})
-user.cn = '曹可'
+user = users.read({'uid': 'kcao'})
+id = user.id[0]
 user = {
-    'ftId': 'dca76401-7442-11e6-94a3-6165a020b7a2',
+    'ftId': id,
+    'sn': '曹可',
     'emails': 'kcao@libnet.sh.cn'
 }
 users.update(user)
 user = users.read({'uid': 'kcao'})
-users.authenticate('kcao', 'kenshin77')
-users.update({
-    'ftId': 'dca76401-7442-11e6-94a3-6165a020b7a2',
-    'userPassword': 'kenshin77',
-})
-users.authenticate('kcao', 'kenshin77')
+# users.authenticate('kcao', 'kenshin77')
+users.passwd({'ftId': id}, 'kenshin777', 'kenshin77')
+users.passwd({'ftId': id}, None, 'kenshin777', check=False)
+users.authenticate({'sn': 'kcao'}, 'kenshin77')
+user = users.read({'ftId': id})
+user.phones = ['64455555-8427']
+users.update(user)
 print user.attrs

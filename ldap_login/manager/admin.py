@@ -2,7 +2,7 @@
 from ldap_login.models import users
 from flask import Blueprint
 
-admin_manager = Blueprint('ldap_login', __name__)
+admin_manager = Blueprint('adminMgr', __name__)
 
 
 def add_user(user):

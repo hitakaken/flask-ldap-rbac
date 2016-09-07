@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import itertools
-import ldap
 import logging
 
 from flask import request, abort, _request_ctx_stack
+from flask_restplus import Api
+
+from ldap_login.models import context
 
 try:
     from flask import _app_ctx_stack
@@ -30,7 +31,7 @@ class AccessControlList(object):
 
 class LDAPLoginManager(object):
     def __init__(self, app=None, **kwargs):
-
+        self.api = None
         self.acl = AccessControlList()
         self.before_acl = {'allow': [], 'deny': []}
 
@@ -44,12 +45,19 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
+        api = Api(title='My Title',
+                  version='2.0',
+                  description='A description', )
+        context.initialize(app.config['LDAP'])
         from ldap_login.manager.access import access_manager
         from ldap_login.manager.admin import admin_manager
         from ldap_login.manager.group import group_manager
         from ldap_login.manager.review import review_manager
-        for module in [access_manager, admin_manager, group_manager, review_manager]:
+        for module in [access_manager,
+                       # admin_manager, group_manager, review_manager
+                       ]:
             app.register_blueprint(module, **kwargs)
+        self.api = api
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
 
