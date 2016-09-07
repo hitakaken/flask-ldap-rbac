@@ -12,7 +12,7 @@ install_requires = [
     'python-ldap',
     'PyJWT',
     'flask-restplus',
-    'flask-cors',
+    # 'flask-cors',
     'flatdict',
     'bidict',
     'bson'
