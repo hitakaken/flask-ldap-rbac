@@ -2,6 +2,7 @@ flask
 python-ldap
 PyJWT
 flask-restplus
+flask-cors
 flatdict
 bidict
 bson

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # https://directory.apache.org/fortress/gen-docs/1.0.1/apidocs/org/apache/directory/fortress/core/AccessMgr.html
 from flask import Blueprint
-from flask_restplus import Api, Namespace, Resource, fields
+from flask_restplus import Api, Namespace, Resource, fields, cors
 from ldap_login.exceptions import UserNotFound, InvalidCredentials
 from ldap_login.models import context, users
 
@@ -35,6 +35,7 @@ class Authenticate(Resource):
 
     @api.expect(context.credential)
     @api.marshal_with(context.token)
+    # @cors.crossdomain(origin='*')
     def post(self):
         """
         Authenticate

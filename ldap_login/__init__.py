@@ -3,6 +3,7 @@ import logging
 
 from flask import request, abort, _request_ctx_stack
 from flask_restplus import Api
+from flask_cors import CORS
 
 from ldap_login.models import context
 
@@ -45,6 +46,7 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
+        CORS(app)
         context.initialize(app.config['LDAP'])
 
         def get_secret(content, ext=None):
