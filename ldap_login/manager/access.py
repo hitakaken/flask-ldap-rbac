@@ -11,7 +11,8 @@ api = Api(
     access_manager,
     title='Access Manager',
     version='1.0',
-    description=''
+    description='',
+    tags=['user']
 )
 api.add_namespace(context.namespace)
 
