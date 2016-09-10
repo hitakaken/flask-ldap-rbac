@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import flatdict
-from ldap_login.models.helper import LdapEntity, GLOBAL_LDAP_CONFIG
+from ldap_rbac.models.helper import LdapEntity, GLOBAL_LDAP_CONFIG
 
 
 class FortEntity(LdapEntity):

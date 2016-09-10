@@ -2,8 +2,8 @@
 # https://directory.apache.org/fortress/gen-docs/1.0.1/apidocs/org/apache/directory/fortress/core/AccessMgr.html
 from flask import Blueprint
 from flask_restplus import Api, Namespace, Resource, fields, cors
-from ldap_login.exceptions import UserNotFound, InvalidCredentials
-from ldap_login.models import context, users
+from ldap_rbac.exceptions import UserNotFound, InvalidCredentials
+from ldap_rbac.models import context, users
 
 
 access_manager = Blueprint('accessMgr', __name__)

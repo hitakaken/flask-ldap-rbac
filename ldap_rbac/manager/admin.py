@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ldap_login.models import users
+from ldap_rbac.models import users
 from flask import Blueprint
 
 admin_manager = Blueprint('adminMgr', __name__)

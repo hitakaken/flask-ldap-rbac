@@ -3,7 +3,7 @@ import logging
 
 from flask import request, abort, _request_ctx_stack
 
-from ldap_login.models import context
+from ldap_rbac.models import context
 
 try:
     from flask import _app_ctx_stack
@@ -55,10 +55,10 @@ class LDAPLoginManager(object):
         setattr(context, 'get_secret', get_secret)
         setattr(context, 'get_algorithm', get_algorithm)
 
-        from ldap_login.manager.access import access_manager
-        from ldap_login.manager.admin import admin_manager
-        from ldap_login.manager.group import group_manager
-        from ldap_login.manager.review import review_manager
+        from ldap_rbac.manager.access import access_manager
+        from ldap_rbac.manager.admin import admin_manager
+        from ldap_rbac.manager.group import group_manager
+        from ldap_rbac.manager.review import review_manager
         for module in [access_manager,
                        # admin_manager, group_manager, review_manager
                        ]:

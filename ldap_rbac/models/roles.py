@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ldap_login.models.base import FortEntityWithProperties
-from ldap_login.models.helper import GLOBAL_LDAP_CONNECTION
+from ldap_rbac.models.base import FortEntityWithProperties
+from ldap_rbac.models.helper import GLOBAL_LDAP_CONNECTION
 
 
 class Role(FortEntityWithProperties):

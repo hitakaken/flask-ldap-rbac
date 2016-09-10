@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import jwt
-from ldap_login import exceptions
-from ldap_login.models.helper import GLOBAL_LDAP_CONNECTION
-from ldap_login.models.base import Config
-from ldap_login.models.users import User
-from ldap_login.models.rbac import Policy, RBAC, Constraint
-from ldap_login.models.roles import Role
-from ldap_login.models.permissions import PermObj
+from ldap_rbac import exceptions
+from ldap_rbac.models.helper import GLOBAL_LDAP_CONNECTION
+from ldap_rbac.models.base import Config
+from ldap_rbac.models.users import User
+from ldap_rbac.models.rbac import Policy, RBAC, Constraint
+from ldap_rbac.models.roles import Role
+from ldap_rbac.models.permissions import PermObj
 from flask_restplus import Namespace, fields, reqparse
 
 

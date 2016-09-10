@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
-from ldap_login import LDAPLoginManager
+from ldap_rbac import LDAPLoginManager
 import settings
 
 app = Flask(__name__)
