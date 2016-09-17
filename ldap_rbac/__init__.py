@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request, abort, _request_ctx_stack
-
+from flask import Blueprint, request, abort, _request_ctx_stack
+from flask_login import LoginManager
+from ldap_rbac import exceptions
+from ldap_rbac.extensions import api
 from ldap_rbac.models import context
 
 try:
@@ -33,7 +35,8 @@ class LDAPLoginManager(object):
         self.api = None
         self.acl = AccessControlList()
         self.before_acl = {'allow': [], 'deny': []}
-
+        self.login_manager = LoginManager()
+        self.login_manager.request_loader(self.load_user_from_request)
         # self._role_model = kwargs.get('role_model', RoleMixin)
         # self._user_model = kwargs.get('user_model', UserMixin)
         # self._user_loader = kwargs.get('user_loader', lambda: current_user)
@@ -44,27 +47,27 @@ class LDAPLoginManager(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-        context.initialize(app.config['LDAP'])
-
-        def get_secret(content, ext=None):
-            return app.config.get('JWT', {}).get('secrect', 'secret')
-
-        def get_algorithm(content, ext=None):
-            return app.config.get('JWT', {}).get('algorithm', 'HS256')
-
-        setattr(context, 'get_secret', get_secret)
-        setattr(context, 'get_algorithm', get_algorithm)
-
-        from ldap_rbac.manager.access import access_manager
-        from ldap_rbac.manager.admin import admin_manager
-        from ldap_rbac.manager.group import group_manager
-        from ldap_rbac.manager.review import review_manager
+        # 初始化LDAP
+        context.initialize_ldap(app.config['LDAP'])
+        # 初始化JWT
+        context.initialize_jwt(app.config.get('JWT', {}))
+        # 注册异常
+        api.add_namespace(exceptions.api)
+        # 注册模型
+        api.add_namespace(context.namespace)
+        # 注册管理模块
+        from ldap_rbac.manager import access_manager, admin_manager, group_manager, review_manager
         for module in [access_manager,
                        # admin_manager, group_manager, review_manager
                        ]:
-            app.register_blueprint(module, **kwargs)
+            api.add_namespace(module)
+        # 生成蓝图
+        api_blueprint = Blueprint('api', __name__, *kwargs)
+        api.init_app(api_blueprint)
+        app.register_blueprint(api_blueprint)
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
+        self.api = api
 
     def get_app(self, reference_app=None):
         """Helper method that implements the logic to look up an application.
@@ -79,12 +82,6 @@ class LDAPLoginManager(object):
         raise RuntimeError('application not registered on rbac '
                            'instance and no application bound '
                            'to current context')
-
-    def get_secret(self, func):
-        setattr(context, 'get_secret', func)
-
-    def get_algorithm(self, func):
-        setattr(context, 'get_algorithm', func)
 
     def _authenticate(self):
         app = self.get_app()
@@ -102,3 +99,13 @@ class LDAPLoginManager(object):
             self.acl.deny(role, method, resource, with_children)
         self.acl.seted = True
 
+    def load_user_from_request(self, request):
+        user = None
+
+        # if hasattr(request, 'oauth'):
+        #    user = request.oauth.user
+        # else:
+        #     is_valid, oauth = oauth2.verify_request(scopes=[])
+        #    if is_valid:
+        #         user = oauth.user
+        return user

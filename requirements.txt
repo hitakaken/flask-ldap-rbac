@@ -1,7 +1,11 @@
 flask
+six
 python-ldap
 PyJWT
 flask-restplus
+apispec
+webargs
+flask-marshmallow
 # flask-cors
 flatdict
 bidict

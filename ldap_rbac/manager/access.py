@@ -1,34 +1,15 @@
 # -*- coding: utf-8 -*-
 # https://directory.apache.org/fortress/gen-docs/1.0.1/apidocs/org/apache/directory/fortress/core/AccessMgr.html
-from flask import Blueprint
-from flask_restplus import Api, Namespace, Resource, fields, cors
+from ldap_rbac.patched import Namespace, Resource, fields, cors
 from ldap_rbac.exceptions import UserNotFound, InvalidCredentials
 from ldap_rbac.models import context, users
 
-
-access_manager = Blueprint('accessMgr', __name__)
-api = Api(
-    access_manager,
-    title='Access Manager',
-    version='1.0',
-    description='',
-    tags=['user']
-)
-api.add_namespace(context.namespace)
-
-
-@api.errorhandler(UserNotFound)
-@api.marshal_with(context.error, code=404)
-@api.header('My-Header',  'Some description')
-def handle_user_not_found_exception(error):
-    """Return a custom message and 404 status code"""
-    return {'message': UserNotFound.message}, UserNotFound.state_code
-
-
-@api.errorhandler(InvalidCredentials)
-def handle_invalid_credentials_exception(error):
-    """Return a custom message and 403 status code"""
-    return {'message': InvalidCredentials.message}, InvalidCredentials.state_code
+api = Namespace('access',
+                title='Access Manager',
+                version='1.0',
+                description='',
+                tags=['access']
+                )
 
 
 @api.route('/authenticate')
@@ -42,16 +23,14 @@ class Authenticate(Resource):
         Authenticate
 
         :raises UserNotFound: User not found
+        :raises InvalidCredentials: Password Error
         """
         credential = context.credential.parse_args()
         user = users.authenticate({'sn': credential['name']}, credential['password'])
         return {
-            'user': {
-                'name': user.uid,
-            },
-            'token': context.encode({'uid': user.uid, 'id': user.id}),
-            'base': [],
-            'admin': []
+            'token': context.encode({
+
+            })
         }
 
 

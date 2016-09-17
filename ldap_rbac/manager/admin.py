@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
-from ldap_rbac.models import users
 from flask import Blueprint
+from ldap_rbac.patched import Namespace, Resource, fields, cors
+from ldap_rbac.exceptions import UserNotFound, InvalidCredentials
+from ldap_rbac.models import context, users
 
-admin_manager = Blueprint('adminMgr', __name__)
+api = Namespace('admin',
+                title='Admin Manager',
+                version='1.0',
+                description='',
+                tags=['admin']
+                )
 
 
+@api.route('/add_user/')
 def add_user(user):
     if not users.read(user):
         return users.create(user)

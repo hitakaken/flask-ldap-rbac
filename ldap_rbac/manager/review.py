@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from ldap_rbac.patched import Namespace
 
-review_manager = Blueprint('reviewMgr', __name__)
+api = Namespace('review',
+                title='Review Manager',
+                version='1.0',
+                description='',
+                tags=['review']
+                )
 
 
 def assigned_roles(user):

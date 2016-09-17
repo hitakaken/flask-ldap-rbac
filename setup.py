@@ -9,9 +9,13 @@ with open('LICENSE') as f:
 
 install_requires = [
     'flask',
+    'six',
     'python-ldap',
     'PyJWT',
     'flask-restplus',
+    'apispec',
+    'webargs',
+    'flask-marshmallow',
     # 'flask-cors',
     'flatdict',
     'bidict',

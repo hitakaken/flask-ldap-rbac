@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from ldap_rbac.patched import Namespace
 
-group_manager = Blueprint('groupMgr', __name__)
+api = Namespace('group',
+                title='Group Manager',
+                version='1.0',
+                description='',
+                tags=['group']
+                )
 
 
 def add_group(group):

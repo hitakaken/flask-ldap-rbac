@@ -12,7 +12,6 @@ LDAP = {
     'START_TLS': True,
     'TRACE_LEVEL': 1
 }
-
 TOKEN = {
     'SECRET': 'base',
     'EXPIRED': 5000
