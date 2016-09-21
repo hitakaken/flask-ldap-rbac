@@ -13,10 +13,14 @@ api = Namespace('admin',
 
 
 @api.route('/add_user/')
-def add_user(user):
-    if not users.read(user):
-        return users.create(user)
-    raise UserWarning
+class AddUser(Resource):
+    @api.expect(context.credential)
+    @api.marshal_with(context.token)
+    # @cors.crossdomain(origin='*')
+    def post(self):
+        if not users.read(user):
+            return users.create(user)
+        raise UserWarning
 
 
 def disable_user(user):
