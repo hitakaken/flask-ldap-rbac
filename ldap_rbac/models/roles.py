@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ldap_rbac.models.base import FortEntityWithProperties
+from ldap_rbac.models.base import FortEntityWithProperties, Constraint
 from ldap_rbac.models.helper import GLOBAL_LDAP_CONNECTION
 
 
@@ -11,6 +11,11 @@ class Role(FortEntityWithProperties):
 
     def __init__(self, dn=None, attrs=None):
         super(Role, self).__init__(dn=dn, attrs=attrs)
+
+
+class UserRole(Constraint):
+    def __init__(self, user, role, **kwargs):
+        super(UserRole, self).__init__(role, **kwargs)
 
 
 def create(role):

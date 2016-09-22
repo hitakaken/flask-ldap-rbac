@@ -5,7 +5,7 @@ from flask import Blueprint, request, abort, _request_ctx_stack
 from flask_login import LoginManager
 from ldap_rbac import exceptions
 from ldap_rbac.extensions import api
-from ldap_rbac.models import context
+from ldap_rbac.models import context, users
 
 try:
     from flask import _app_ctx_stack
@@ -30,7 +30,7 @@ class AccessControlList(object):
         self.seted = False
 
 
-class LDAPLoginManager(object):
+class RBACManager(object):
     def __init__(self, app=None, **kwargs):
         self.api = None
         self.acl = AccessControlList()
@@ -40,6 +40,7 @@ class LDAPLoginManager(object):
         # self._role_model = kwargs.get('role_model', RoleMixin)
         # self._user_model = kwargs.get('user_model', UserMixin)
         # self._user_loader = kwargs.get('user_loader', lambda: current_user)
+        self.users = users
 
         if app is not None:
             self.app = app
