@@ -32,7 +32,13 @@ setup(
     url='https://github.com/hitakaken/flask-ldap-rbac',
     license=licenses,
     platforms=["any"],
-    packages=['ldap_rbac'],
+    packages=[
+        'ldap_rbac',
+        'ldap_rbac/extensions',
+        'ldap_rbac/manager',
+        'ldap_rbac/models',
+        'ldap_rbac/patched'
+    ],
     test_suite="test.tests",
     install_requires=install_requires,
     tests_require=['nose'],

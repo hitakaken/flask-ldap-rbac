@@ -44,6 +44,10 @@ class Resource(object):
     def show(self):
         pass
 
+    @abstractmethod
+    def save(self):
+        pass
+
 
 
 

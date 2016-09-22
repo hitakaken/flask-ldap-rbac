@@ -147,3 +147,5 @@ def make_secret(password):
     tagged_digest_salt = '{{SSHA}}{}'.format(digest_salt_b64)
 
     return tagged_digest_salt
+
+print make_secret('xxzx123-456')

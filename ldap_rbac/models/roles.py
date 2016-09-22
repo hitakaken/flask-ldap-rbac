@@ -39,6 +39,33 @@ def update(role):
     return result
 
 
-def delete(role):
+def delete_parent(role):
     if isinstance(role, dict):
         role = Role(attrs=role)
+
+
+def remove(role):
+    if isinstance(role, dict):
+        role = Role(attrs=role)
+
+
+def assign(role, user_dn):
+    pass
+
+
+def deassign(role, user_dn):
+    pass
+
+
+def get_role(role):
+    pass
+
+
+def find_roles(role, limit=0):
+    pass
+
+
+def find_assigned_roles(user_dn):
+    pass
+
+

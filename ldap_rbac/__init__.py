@@ -3,7 +3,7 @@ import logging
 
 from flask import Blueprint, request, abort, _request_ctx_stack
 from flask_login import LoginManager
-from ldap_rbac import exceptions
+import exceptions
 from ldap_rbac.extensions import api
 from ldap_rbac.models import context, users
 
@@ -63,9 +63,9 @@ class RBACManager(object):
                        ]:
             api.add_namespace(module)
         # 生成蓝图
-        api_blueprint = Blueprint('api', __name__, *kwargs)
+        api_blueprint = Blueprint('api', __name__, **kwargs)
         api.init_app(api_blueprint)
-        app.register_blueprint(api_blueprint)
+        app.register_blueprint(api_blueprint, **kwargs)
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
         self.api = api

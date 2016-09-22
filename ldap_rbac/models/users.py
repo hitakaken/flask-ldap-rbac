@@ -25,15 +25,6 @@ class User(FortEntityWithProperties):
     def __init__(self, dn=None, attrs=None):
         super(User, self).__init__(dn=dn, attrs=attrs)
 
-UserSchema = {
-    'type': 'object',
-    'properties': {
-        'name': {
-            'type': 'string'
-        }
-    }
-}
-
 
 def create(user):
     if isinstance(user, dict):
@@ -46,13 +37,6 @@ def create(user):
     GLOBAL_LDAP_CONNECTION.add_entry(user)
 
 
-def read(user):
-    if isinstance(user, dict):
-        user = User(attrs=user)
-    user = GLOBAL_LDAP_CONNECTION.find(user)
-    return user
-
-
 def update(user):
     if isinstance(user, dict):
         user = User(attrs=user)
@@ -63,9 +47,36 @@ def update(user):
     return result
 
 
-def delete(user):
+def remove(user):
     user = read(user)
     # TODO
+
+
+def lock(user):
+    pass
+
+
+def unlock(user):
+    pass
+
+
+def read(user):
+    if isinstance(user, dict):
+        user = User(attrs=user)
+    user = GLOBAL_LDAP_CONNECTION.find(user)
+    return user
+
+
+def get_user(user, is_roles=False):
+    pass
+
+
+def get_roles(user):
+    pass
+
+
+def get_admin_roles(user):
+    pass
 
 
 def check_passwd(user, password):
@@ -76,7 +87,23 @@ def check_passwd(user, password):
         return False
 
 
-def passwd(user, oldpw, newpw, check=True):
+def check_pw_policies(user):
+    pass
+
+
+def find_users(user, limit=0):
+    pass
+
+
+def get_authorized_users(role, limit=0):
+    pass
+
+
+def get_assigned_users(role, limit=0):
+    pass
+
+
+def change_password(user, oldpw, newpw, check=True):
     user = read(user)
     if check and 'userpassword' in user.attrs:
         if oldpw is None or not check_passwd(user, oldpw):
@@ -84,6 +111,18 @@ def passwd(user, oldpw, newpw, check=True):
     if not check or 'userpassword' not in user.attrs:
         oldpw = None
     GLOBAL_LDAP_CONNECTION.conn.passwd_s(user.dn, oldpw, newpw)
+
+
+def assign(user_role):
+    pass
+
+
+def deassign(user_role):
+    pass
+
+
+def get_user_roles(uid):
+    pass
 
 
 def authenticate(user, password):
