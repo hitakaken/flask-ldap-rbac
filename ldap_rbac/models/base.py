@@ -100,26 +100,7 @@ class Config(FortEntityWithProperties):
         super(Config, self).__init__(dn=dn, attrs=attrs)
 
 
-class Constraint(object):
-    __metaclass__ = ABCMeta
 
-    def __init__(self, name, is_temporal_set=True,
-                 timeout=None, begin_time=None, end_time=None, begin_date=None, end_date=None,
-                 day_mask=None, begin_lock_date=None, end_lock_date=None,
-                 **kwargs):
-        self.name = name
-        self.is_temporal_set = is_temporal_set
-        self.timeout = timeout
-        self.begin_time = begin_time
-        self.end_time = end_time
-        self.begin_date = begin_date
-        self.end_date = end_date
-        self.day_mask = day_mask
-        self.begin_lock_date = begin_lock_date
-        self.end_lock_date = end_lock_date
-
-    def get_raw_data(self):
-        pass
 
 
 USER_ROLE_ASSIGN = 'ftRA'

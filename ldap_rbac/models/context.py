@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import datetime
+
 import jwt
 import msgpack
+from flask_restplus import Namespace, fields, reqparse
 
 from ldap_rbac import defaults, exceptions
+from ldap_rbac.core import Config
 from ldap_rbac.models.helper import GLOBAL_LDAP_CONNECTION
-from ldap_rbac.models.base import Config
-from ldap_rbac.models.users import User
+from ldap_rbac.models.permissions import PermObj
 from ldap_rbac.models.rbac import Policy, RBAC, Constraint
 from ldap_rbac.models.roles import Role
-from ldap_rbac.models.permissions import PermObj
-from flask_restplus import Namespace, fields, reqparse
+from ldap_rbac.models.users import User
 
 # JWT加密密码获取方式
 GET_JWT_SECRET = None

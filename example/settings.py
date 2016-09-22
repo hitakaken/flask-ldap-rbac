@@ -13,7 +13,7 @@ LDAP = {
     'TRACE_LEVEL': 1
 }
 TOKEN = {
-    'SECRET': 'base',
+    'SECRET': 'core',
     'EXPIRED': 5000
 }
 JWT = {
