@@ -6,8 +6,6 @@ import msgpack
 from flask_restplus import Namespace, fields, reqparse
 
 from ldap_rbac import defaults, exceptions
-from ldap_rbac.core import Config
-from ldap_rbac.models.helper import GLOBAL_LDAP_CONNECTION
 from ldap_rbac.models.permissions import PermObj
 from ldap_rbac.models.rbac import Policy, RBAC, Constraint
 from ldap_rbac.models.roles import Role
@@ -71,19 +69,19 @@ role = namespace.model('Role', {
 })
 
 
-def initialize_ldap(ldap_config):
-    """初始化LDAP"""
-    GLOBAL_LDAP_CONNECTION.init_config(ldap_config)
-    GLOBAL_LDAP_CONNECTION.begin()
-    entity_classes = [Config, User, Policy, RBAC, Role, PermObj, Constraint]
-    schema_names = set()
-    for entity_class in entity_classes:
-        for object_class in entity_class.object_class:
-            schema_names.add(object_class)
-    GLOBAL_LDAP_CONNECTION.load_object_classes(list(schema_names))
-    for entity_class in entity_classes:
-        GLOBAL_LDAP_CONNECTION.register_entity_class(entity_class)
-    GLOBAL_LDAP_CONNECTION.end()
+# def initialize_ldap(ldap_config):
+#    """初始化LDAP"""
+#    GLOBAL_LDAP_CONNECTION.init_config(ldap_config)
+#    GLOBAL_LDAP_CONNECTION.begin()
+#    entity_classes = [Config, User, Policy, RBAC, Role, PermObj, Constraint]
+#    schema_names = set()
+#    for entity_class in entity_classes:
+#        for object_class in entity_class.object_class:
+#            schema_names.add(object_class)
+#    GLOBAL_LDAP_CONNECTION.load_object_classes(list(schema_names))
+#    for entity_class in entity_classes:
+#        GLOBAL_LDAP_CONNECTION.register_entity_class(entity_class)
+#    GLOBAL_LDAP_CONNECTION.end()
 
 
 def initialize_jwt(jwt_config):

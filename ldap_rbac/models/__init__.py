@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-import context
-import users
+from ldap_rbac.core.models import Config
+from users import User

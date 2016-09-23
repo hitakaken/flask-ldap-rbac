@@ -5,7 +5,7 @@ from flask import Blueprint, request, abort, _request_ctx_stack
 from flask_login import LoginManager
 import exceptions
 from ldap_rbac.extensions import api
-from ldap_rbac.models import context, users
+# from ldap_rbac.models import context, users
 
 try:
     from flask import _app_ctx_stack
@@ -40,22 +40,21 @@ class RBACManager(object):
         # self._role_model = kwargs.get('role_model', RoleMixin)
         # self._user_model = kwargs.get('user_model', UserMixin)
         # self._user_loader = kwargs.get('user_loader', lambda: current_user)
-        self.users = users
 
         if app is not None:
             self.app = app
-        if app is not None or len(kwargs) > 0:
             self.init_app(app, **kwargs)
+
 
     def init_app(self, app, **kwargs):
         # 初始化LDAP
-        context.initialize_ldap(app.config['LDAP'])
+        # context.initialize_ldap(app.config['LDAP'])
         # 初始化JWT
-        context.initialize_jwt(app.config.get('JWT', {}))
+        # context.initialize_jwt(app.config.get('JWT', {}))
         # 注册异常
         api.add_namespace(exceptions.api)
         # 注册模型
-        api.add_namespace(context.namespace)
+        # api.add_namespace(context.namespace)
         # 注册管理模块
         from ldap_rbac.manager import access_manager, admin_manager, group_manager, review_manager
         for module in [access_manager,
@@ -63,12 +62,13 @@ class RBACManager(object):
                        ]:
             api.add_namespace(module)
         # 生成蓝图
-        api_blueprint = Blueprint('api', __name__, **kwargs)
+        api_blueprint = Blueprint('api', __name__)
         api.init_app(api_blueprint)
         app.register_blueprint(api_blueprint, **kwargs)
         app.before_first_request(self._setup_acl)
         app.before_request(self._authenticate)
         self.api = api
+        setattr(app, 'rbac', self)
 
     def get_app(self, reference_app=None):
         """Helper method that implements the logic to look up an application.

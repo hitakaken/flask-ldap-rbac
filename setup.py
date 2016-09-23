@@ -34,7 +34,10 @@ setup(
     platforms=["any"],
     packages=[
         'ldap_rbac',
+        'ldap_rbac/controllers',
+        'ldap_rbac/core',
         'ldap_rbac/extensions',
+        'ldap_rbac/helpers',
         'ldap_rbac/manager',
         'ldap_rbac/models',
         'ldap_rbac/patched'

@@ -4,6 +4,8 @@ AUTHZ_COMPARE_FAILURE_FLAG = 5
 
 FAILED_AUTHZ_INDICATOR = "%failed%"
 
+FT_PREFIX = "ft"
+
 FT_MODIFIER_AUX_OBJECT_CLASS_NAME = "ftMods"
 
 FT_MODIFIER = "ftModifier"
@@ -15,6 +17,8 @@ FT_MODIFIER_ID = "ftModId"
 FT_IID = "ftId"
 
 FILTER_PREFIX = "(&(%s="
+
+FILTER_TRUE = "(objectClass=*)"
 
 PROPS_AUX_OBJECT_CLASS_NAME = "ftProperties"
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ldap_rbac.core import FortEntityWithProperties
+from ldap_rbac.core.models import FortEntityWithProperties
 
 
 class PermObj(FortEntityWithProperties):
