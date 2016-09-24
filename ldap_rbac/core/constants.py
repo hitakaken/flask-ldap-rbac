@@ -78,4 +78,15 @@ POP_NAME = "ftOpNm"
 
 AUTH_Z_FAILED_VALUE = POP_NAME + "=" + AUTH_Z_FAILED
 
+UID_NUMBER = "uidNumber"
+GID_NUMBER = "gidNumber"
+HOME_DIRECTORY = "homeDirectory"
+LOGIN_SHELL = "loginShell"
+GECOS = "gecos"
+SYSTEM_USER = "ftSystem"
 
+OPENLDAP_POLICY_SUBENTRY = "pwdPolicySubentry"
+OPENLDAP_PW_RESET = "pwdReset"
+OPENLDAP_PW_LOCKED_TIME = "pwdAccountLockedTime"
+OPENLDAP_ACCOUNT_LOCKED_TIME = "pwdAccountLockedTime"
+LOCK_VALUE = "000001010000Z"

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from ldap_rbac.core import constants, utils
 from ldap_rbac.models import User
 from ldap_rbac.core.helpers import BaseHelper
 
@@ -12,13 +13,47 @@ class UserHelper(BaseHelper):
     def entity_class(self):
         return User
 
+    def getattr(self, user, attr_name):
+        if attr_name == 'locked':
+            return constants.OPENLDAP_PW_LOCKED_TIME in user.attrs \
+                   and user.attrs[constants.OPENLDAP_PW_LOCKED_TIME][0] == constants.LOCK_VALUE
+        elif attr_name == 'system_user':
+            return constants.SYSTEM_USER in user.attrs \
+                   and user.attrs[constants.SYSTEM_USER][0] == 'true'
+        elif attr_name == 'pwpolicy':
+            return None if constants.OPENLDAP_POLICY_SUBENTRY not in user.attrs \
+                else utils.rdn(user.attrs[constants.OPENLDAP_POLICY_SUBENTRY][0])
+        else:
+            return super(UserHelper, self).getattr(user, attr_name)
+
+    def setattr(self, user, key, value):
+        if key == 'locked':
+            if value is True:
+                user.attrs[constants.OPENLDAP_PW_LOCKED_TIME] = [constants.LOCK_VALUE]
+            else:
+                user.attrs.pop(constants.OPENLDAP_PW_LOCKED_TIME, None)
+        elif key == 'system_user':
+            if value is True:
+                user.attrs[constants.SYSTEM_USER] = ['true']
+            else:
+                user.attrs.pop(constants.SYSTEM_USER, None)
+        elif key == 'pwpolicy':
+            if value is None:
+                user.attrs.pop(constants.OPENLDAP_POLICY_SUBENTRY, None)
+            else:
+                user.attrs
+        else:
+            super(UserHelper, self).setattr(user, key, value)
+
     def lock(self, user):
-        pass
+        user.locked = True
+        self.save(user)
 
-    def unlock(self,user):
-        pass
+    def unlock(self, user):
+        user.locked = False
+        self.save(user)
 
-    def get_user(self,user, is_roles=False):
+    def get_user(self, user, is_roles=False):
         pass
 
     def get_roles(self,user):

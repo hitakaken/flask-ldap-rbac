@@ -7,7 +7,8 @@ from ldap.cidict import cidict
 import ldap.modlist as modlist
 import ldap.schema
 import schemas
-from ldap_rbac.core.models import LdapEntity, Config
+from ldap_rbac.core.models import LdapEntity
+import utils
 
 
 class LdapConfig(object):
@@ -89,7 +90,8 @@ class LdapConnection(object):
 
     def root_dn(self, entity_class):
         """实体对象根节点DN"""
-        return '%s,%s' % (entity_class.ROOT, self.config.BASE_DN)
+        return '%s,%s' % (entity_class.ROOT, self.config.BASE_DN) if len(entity_class.ROOT) > 0 \
+            else self.config.BASE_DN
 
     def root_entry(self, entity_class):
         """实体对象根节点"""
@@ -232,17 +234,17 @@ class BaseHelper(object):
     def entity_class(self):
         return LdapEntity
 
-    def get_dn(self, entry):
+    def get_dn(self, entry, entity_class=None):
+        entity_class = self.entity_class() if entity_class is None else entity_class
         if entry.dn is not None and '=' not in entry.dn:
-            entry.dn = '%s=%s,%s,%s' % (self.entity_class().ID_FIELD, entry.dn,
-                                        self.entity_class().ROOT, self.ldap.config.BASE_DN)
-        if entry.dn is None and self.entity_class().ID_FIELD in entry.attrs:
-            entry.dn = self.id_to_dn(entry.attrs[self.entity_class().ID_FIELD])
+            entry.dn = '%s=%s,%s' % (entity_class.ID_FIELD, entry.dn, self.ldap.root_dn(entity_class))
+        if entry.dn is None and entity_class.ID_FIELD in entry.attrs:
+            entry.dn = self.id_to_dn(entry.attrs[entity_class.ID_FIELD])
         return entry.dn
 
-    def id_to_dn(self, entry_id):
-        return '%s=%s,%s,%s' % (self.entity_class().ID_FIELD, entry_id,
-                         self.entity_class().ROOT, self.ldap.config.BASE_DN)
+    def id_to_dn(self, entry_id, entity_class=None):
+        entity_class = self.entity_class() if entity_class is None else entity_class
+        return '%s=%s,%s' % (entity_class.ID_FIELD, entry_id, self.ldap.root_dn(entity_class))
 
     def instance(self, dn=None, attrs=None, **kwargs):
         cls = self.entity_class()
@@ -277,6 +279,9 @@ class BaseHelper(object):
         if isinstance(entry, dict):
             entry = self.instance(attrs=dict)
         dn = self.get_dn(entry)
+        class_name = self.entity_class().__name__
+        if constants.FT_IID in self.ldap.config.ENTITY_CLASSES[class_name]['MUST']:
+            entry.iid()
         self.ldap.create(dn, entry.attrs)
 
     def find_one(self, entry_id):

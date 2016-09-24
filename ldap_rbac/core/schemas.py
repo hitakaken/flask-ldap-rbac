@@ -51,6 +51,14 @@ REGISTER_OBJECT_CLASSES = {
         'MUST': ['cn'],
         'MAY': ['description', 'l', 'o', 'ou', 'owner', 'seeAlso', 'serialNumber']
     },
+    'pwdPolicy':{
+        'MUST': ['pwdAttribute'],
+        'MAY': [
+            'pwdMinAge', 'pwdMaxAge', 'pwdInHistory', 'pwdCheckQuality',
+            'pwdMinLength', 'pwdExpireWarning', 'pwdGraceAuthNLimit', 'pwdLockout',
+            'pwdLockoutDuration', 'pwdMaxFailure', 'pwdFailureCountInterval',
+            'pwdMustChange', 'pwdAllowUserChange', 'pwdSafeModify']
+    },
     'ftMods ':{
         'MAY': ['ftModifier', 'ftModCode', 'ftModId']
     },

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta, abstractmethod
+import constants
 from ldap.cidict import cidict
 import six
 import utils
@@ -8,6 +9,9 @@ import utils
 class LdapEntity(object):
     """LDAP持久化对象抽象类"""
     IGNORE_ATTR_TYPES = []
+    ID_FIELD = 'ou'
+    ROOT = ''
+    OBJECT_CLASS = ['top', 'organizationalUnit']
 
     def __init__(self, dn=None, attrs=None, helper=None):
         self.__dict__['dn'] = dn
@@ -37,6 +41,11 @@ class LdapEntity(object):
 
     def cache(self):
         self.cached_attrs = self.attrs.copy()
+
+    def iid(self):
+        if constants.FT_IID not in self.attrs:
+            self.attrs[constants.FT_IID] = [utils.uuid()]
+        return self.attrs[constants.FT_IID][0]
 
     def update(self, attrs):
         for k, v in six.iteritems(attrs):
@@ -87,12 +96,11 @@ class Config(PropertiesEntity):
 class Constraint(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, name=None, is_temporal_set=True,
+    def __init__(self, name=None,
                  timeout=None, begin_time=None, end_time=None, begin_date=None, end_date=None,
                  day_mask=None, begin_lock_date=None, end_lock_date=None,
                  **kwargs):
         self.name = name
-        self.is_temporal_set = is_temporal_set
         self.timeout = timeout
         self.begin_time = begin_time
         self.end_time = end_time
@@ -102,7 +110,8 @@ class Constraint(object):
         self.begin_lock_date = begin_lock_date
         self.end_lock_date = end_lock_date
 
-    def get_raw_data(self):
+    @abstractmethod
+    def raw_data(self):
         pass
 
 

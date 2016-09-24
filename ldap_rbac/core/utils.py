@@ -58,7 +58,11 @@ def object_id_to_uuid(object_id):
                              | (b[10] & 0xFF) << 8 | b[11] & 0xFF))[2:]
     uuid_string = '%s-%s-%s-%s-%s' % (most_sig_bits[:8], most_sig_bits[8:12], most_sig_bits[12:16],
                                       least_sig_bits[0:4], least_sig_bits[4:-1])
-    return UUID(uuid_string)
+    return uuid_string
+
+
+def uuid():
+    return object_id_to_uuid(ObjectId())
 
 
 def flatten(properties):
@@ -119,3 +123,13 @@ def unflatten(flatten_properties, splitter=None):
             field = keys[-1]
             temp_dict[field] = value
     return dict_out
+
+
+def rdn(dn):
+    return dn if dn.index('=') < 0 else (dn + ',').split(',')[0].split('=')[1]
+
+
+def xstr(s):
+    if s is None:
+        return ''
+    return str(s)

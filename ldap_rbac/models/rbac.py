@@ -1,36 +1,60 @@
 # -*- coding: utf-8 -*-
 # http://csrc.nist.gov/groups/SNS/rbac/documents/draft-rbac-implementation-std-v01.pdf
 # http://schd.ws/hosted_files/apachecon2016/f1/How%20I%20Built%20an%20IAM%20System%20using%20Java%20and%20Apache%20Directory%20Fortress.pdf
-
-from ldap_rbac.core.models import FortEntity
-
-
-class Policy(FortEntity):
-    object_class = ['top', 'device', 'pwdPolicy', 'ftMods']
-    idx_field = 'cn'
-    branch_part = 'ou=Policies'
-    branch_description = 'Fortress Policies'
-
-    def __init__(self, dn=None, attrs=None):
-        super(Policy, self).__init__(dn=dn, attrs=attrs)
+from ldap_rbac.core import utils
+from ldap_rbac.core.models import LdapEntity, PropertiesEntity, Constraint
 
 
-class RBAC(FortEntity):
-    object_class = ['organizationalUnit']
-    idx_field = 'ou'
-    branch_part = 'ou=RBAC'
-    branch_description = 'Fortress RBAC Policies'
+class User(PropertiesEntity):
+    """Fortress People"""
+    ID_FIELD = 'uid'
+    ROOT = 'ou=People'
+    OBJECT_CLASS = ['top', 'inetOrgPerson', 'organizationalPerson',
+                    'ftUserAttrs', 'ftProperties', 'ftMods', 'extensibleObject']
 
     def __init__(self, dn=None, attrs=None):
-        super(RBAC, self).__init__(dn=dn, attrs=attrs)
+        super(User, self).__init__(dn=dn, attrs=attrs)
 
 
-class Constraint(FortEntity):
-    object_class = ['top', 'ftSSDSet', 'ftMods']
-    idx_field = 'cn'
-    branch_part = 'ou=Constraints,ou=RBAC'
-    branch_description = 'Fortress Separation of Duty Constraints'
+class Role(PropertiesEntity):
+    """Fortress Roles"""
+    ID_FIELD = 'cn'
+    ROOT = 'ou=Roles,ou=RBAC'
+    OBJECT_CLASS = ['top', 'ftRls', 'ftProperties', 'ftMods']
 
     def __init__(self, dn=None, attrs=None):
-        super(Constraint, self).__init__(dn=dn, attrs=attrs)
+        super(Role, self).__init__(dn=dn, attrs=attrs)
+
+
+class PWPolicy(LdapEntity):
+    """Fortress Policies"""
+    ID_FIELD = 'cn'
+    ROOT = 'ou=Policies'
+    OBJECT_CLASS = ['top', 'device', 'pwdPolicy', 'ftMods']
+
+    def __init__(self, dn=None, attrs=None):
+        super(PWPolicy, self).__init__(dn=dn, attrs=attrs)
+
+
+class UserRole(Constraint):
+    def __init__(self, name=None, timeout=None, begin_time=None, end_time=None, begin_date=None,
+                 end_date=None, day_mask=None, begin_lock_date=None, end_lock_date=None, **kwargs):
+        super(UserRole, self).__init__(name=name, timeout=timeout, begin_time=begin_time, end_time=end_time,
+                                       begin_date=begin_date, end_date=end_date, day_mask=day_mask,
+                                       begin_lock_date=begin_lock_date, end_lock_date=end_lock_date, **kwargs)
+
+    def raw_data(self):
+        return '%s$%s$%s$%s$%s$%s$%s$%s$%s' % (
+            self.name,
+            utils.xstr(self.timeout),
+            utils.xstr(self.begin_time),
+            utils.xstr(self.end_time),
+            utils.xstr(self.begin_date),
+            utils.xstr(self.end_date),
+            utils.xstr(self.begin_lock_date),
+            utils.xstr(self.end_lock_date),
+            utils.xstr(self.day_mask),
+        )
+
+
 
