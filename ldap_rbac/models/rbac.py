@@ -26,6 +26,21 @@ class Role(PropertiesEntity):
         super(Role, self).__init__(dn=dn, attrs=attrs)
 
 
+class UserRole(Constraint):
+    def __init__(self, name=None, timeout=None, begin_time=None, end_time=None, begin_date=None,
+                 end_date=None, day_mask=None, begin_lock_date=None, end_lock_date=None,
+                 raw_data=None, **kwargs):
+        if raw_data is not None:
+            super(UserRole, self).__init__(name=name, timeout=timeout, begin_time=begin_time, end_time=end_time,
+                                           begin_date=begin_date, end_date=end_date, day_mask=day_mask,
+                                           begin_lock_date=begin_lock_date, end_lock_date=end_lock_date, **kwargs)
+        else:
+            self.parse(raw_data)
+
+    def raw_data(self):
+        return super(UserRole, self).raw_data()
+
+
 class PWPolicy(LdapEntity):
     """Fortress Policies"""
     ID_FIELD = 'cn'
@@ -34,27 +49,3 @@ class PWPolicy(LdapEntity):
 
     def __init__(self, dn=None, attrs=None):
         super(PWPolicy, self).__init__(dn=dn, attrs=attrs)
-
-
-class UserRole(Constraint):
-    def __init__(self, name=None, timeout=None, begin_time=None, end_time=None, begin_date=None,
-                 end_date=None, day_mask=None, begin_lock_date=None, end_lock_date=None, **kwargs):
-        super(UserRole, self).__init__(name=name, timeout=timeout, begin_time=begin_time, end_time=end_time,
-                                       begin_date=begin_date, end_date=end_date, day_mask=day_mask,
-                                       begin_lock_date=begin_lock_date, end_lock_date=end_lock_date, **kwargs)
-
-    def raw_data(self):
-        return '%s$%s$%s$%s$%s$%s$%s$%s$%s' % (
-            self.name,
-            utils.xstr(self.timeout),
-            utils.xstr(self.begin_time),
-            utils.xstr(self.end_time),
-            utils.xstr(self.begin_date),
-            utils.xstr(self.end_date),
-            utils.xstr(self.begin_lock_date),
-            utils.xstr(self.end_lock_date),
-            utils.xstr(self.day_mask),
-        )
-
-
-

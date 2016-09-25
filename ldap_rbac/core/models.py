@@ -112,7 +112,29 @@ class Constraint(object):
 
     @abstractmethod
     def raw_data(self):
-        pass
+        return '%s$%s$%s$%s$%s$%s$%s$%s$%s' % (
+            self.name,
+            utils.xstr(self.timeout),
+            utils.xstr(self.begin_time),
+            utils.xstr(self.end_time),
+            utils.xstr(self.begin_date),
+            utils.xstr(self.end_date),
+            utils.xstr(self.begin_lock_date),
+            utils.xstr(self.end_lock_date),
+            utils.xstr(self.day_mask),
+        )
+
+    def parse(self, raw_data):
+        chunks = raw_data.split('$')
+        self.name = chunks[0]
+        self.timeout = utils.chunk(chunks, 1, mapping=utils.convert_string_to_integer)
+        self.begin_time = utils.chunk(chunks, 2, mapping=utils.convert_string_to_integer)
+        self.end_time = utils.chunk(chunks, 3, mapping=utils.convert_string_to_integer)
+        self.begin_date = utils.chunk(chunks, 4, mapping=utils.convert_string_to_integer)
+        self.end_date = utils.chunk(chunks, 5, mapping=utils.convert_string_to_integer)
+        self.begin_lock_date = utils.chunk(chunks, 6, mapping=utils.convert_string_to_integer)
+        self.end_lock_date = utils.chunk(chunks, 7, mapping=utils.convert_string_to_integer)
+        self.day_mask = utils.chunk(chunks, 8, mapping=utils.convert_string_to_integer)
 
 
 class Resource(object):

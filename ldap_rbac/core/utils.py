@@ -133,3 +133,12 @@ def xstr(s):
     if s is None:
         return ''
     return str(s)
+
+
+def chunk(chunks, index, default=None, mapping=None):
+    result = chunks[index] if len(chunks) > index else default
+    return result if mapping is None else mapping(result)
+
+
+def convert_string_to_integer(text, default=None):
+    return default if text is None or len(text) == 0 else int(text)

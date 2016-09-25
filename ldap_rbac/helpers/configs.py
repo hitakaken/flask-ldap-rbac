@@ -5,8 +5,8 @@ from ldap_rbac.core.helpers import BaseHelper
 
 class ConfigHelper(BaseHelper):
     """配置集合"""
-    def __init__(self, ldap_connection):
-        super(ConfigHelper,self).__init__(ldap_connection)
+    def __init__(self, ldap_connection, name=None):
+        super(ConfigHelper,self).__init__(ldap_connection, name=name)
 
     def entity_class(self):
         return Config

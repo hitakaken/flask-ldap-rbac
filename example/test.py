@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from ldap_rbac.models import Config, User
-from ldap_rbac.helpers import LdapConnection, ConfigHelper
+from ldap_rbac.helpers import LdapConnection, ConfigHelper, UserHelper
 import settings
-
-entity_classes = [Config, User]
+# LDAP 定义
 connection = LdapConnection(ldap_config=settings.LDAP)
 connection.begin()
-connection.load_entity_classes(entity_classes)
-connection.register_entity_classes(entity_classes)
-
-configs = ConfigHelper(connection)
-
+# DAO 定义
+configs = ConfigHelper(connection, name='configs')
+users = UserHelper(connection, name='users')
+# 初始化
+connection.initialize()

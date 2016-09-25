@@ -28,6 +28,8 @@ ROLE_OBJECT_CLASS_NM = "ftRls"
 
 CONSTRAINT = "ftCstr"
 
+ADMIN_USER_ROLE_NAME = 'admin'
+
 USER_ROLE_ASSIGN = "ftRA"
 
 USER_ROLE_DATA = "ftRC"

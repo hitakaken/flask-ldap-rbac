@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from ldap_rbac.core import constants, utils
-from ldap_rbac.models import User
+from ldap_rbac.models import User, PWPolicy
 from ldap_rbac.core.helpers import BaseHelper
 
 
 class UserHelper(BaseHelper):
     """用户集合"""
 
-    def __init__(self, ldap_connection):
-        super(UserHelper, self).__init__(ldap_connection)
+    def __init__(self, ldap_connection, name=None):
+        super(UserHelper, self).__init__(ldap_connection, name=name)
 
     def entity_class(self):
         return User
@@ -41,7 +41,7 @@ class UserHelper(BaseHelper):
             if value is None:
                 user.attrs.pop(constants.OPENLDAP_POLICY_SUBENTRY, None)
             else:
-                user.attrs
+                user.attrs[constants.OPENLDAP_POLICY_SUBENTRY] = [value.cn if isinstance(value, PWPolicy) else value]
         else:
             super(UserHelper, self).setattr(user, key, value)
 
@@ -56,7 +56,10 @@ class UserHelper(BaseHelper):
     def get_user(self, user, is_roles=False):
         pass
 
-    def get_roles(self,user):
+    def get_roles(self, user):
+        pass
+
+    def get_role_names(self, user):
         pass
 
     def get_admin_roles(self,user):

@@ -8,7 +8,7 @@ import ldap.modlist as modlist
 import ldap.schema
 import schemas
 from ldap_rbac.core.models import LdapEntity
-import utils
+import six
 
 
 class LdapConfig(object):
@@ -29,6 +29,7 @@ class LdapConnection(object):
         self.binding = False
         self.ldap_schema = None
         self.config = LdapConfig()
+        self.helpers = {}
 
         if ldap_config is not None:
             self.init_config(ldap_config)
@@ -67,6 +68,15 @@ class LdapConnection(object):
         # self.conn.unbind_s()
         self.binding = False
         return self
+
+    def initialize(self):
+        """初始化"""
+        self.begin()
+        entity_classes = []
+        for name, helper in six.iteritems(self.helpers):
+            entity_classes.append(helper.entity_class())
+        self.load_entity_classes(entity_classes)
+        self.register_entity_classes(entity_classes)
 
     def load_ldap_schema(self, force=False):
         """加载LDAP Schema"""
@@ -227,8 +237,10 @@ class BaseHelper(object):
     """对象集合接口"""
     __metaclass__ = ABCMeta
 
-    def __init__(self, ldap_connection):
+    def __init__(self, ldap_connection, name=None):
         self.ldap = ldap_connection
+        self.name = name if name is not None else self.__class__.__name__
+        self.register()
 
     @abstractmethod
     def entity_class(self):
@@ -342,5 +354,6 @@ class BaseHelper(object):
         # TODO
         pass
 
-
+    def register(self):
+        self.ldap.helpers[self.name] = self
 
