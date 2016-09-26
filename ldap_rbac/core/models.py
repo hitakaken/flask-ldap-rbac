@@ -141,11 +141,53 @@ class Resource(object):
     __metaclass__ = ABCMeta
     permissions = []
 
-    def get_permissions(self):
-        return self.permissions
+    @abstractmethod
+    def create(self):
+        pass
 
-    def add_permission(self, permission):
-        self.permissions.append(permission)
+    @abstractmethod
+    def delete(self):
+        pass
+
+    @abstractmethod
+    def exists(self):
+        pass
+
+    @abstractmethod
+    def get_name(self):
+        pass
+
+    @abstractmethod
+    def get_path(self):
+        pass
+
+    @abstractmethod
+    def get_parent(self):
+        pass
+
+    @abstractmethod
+    def is_directory(self):
+        pass
+
+    @abstractmethod
+    def is_file(self):
+        pass
+
+    @abstractmethod
+    def list(self):
+        pass
+
+    @abstractmethod
+    def mkdir(self):
+        pass
+
+    @abstractmethod
+    def last_modify(self):
+        pass
+
+    @abstractmethod
+    def content(self):
+        pass
 
     @abstractmethod
     def grant(self, who, permissions):
