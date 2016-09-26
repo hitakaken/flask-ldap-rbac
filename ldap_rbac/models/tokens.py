@@ -22,4 +22,3 @@ class TokenUser(UserMixin):
     def is_admin(self):
         return self.has_role(constants.ADMIN_USER_ROLE_NAME)
 
-

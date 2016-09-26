@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # see org.apache.directory.fortress.core.GlobalIds.java
+import datetime
+
 AUTHZ_COMPARE_FAILURE_FLAG = 5
 
 FAILED_AUTHZ_INDICATOR = "%failed%"
@@ -92,3 +94,8 @@ OPENLDAP_PW_RESET = "pwdReset"
 OPENLDAP_PW_LOCKED_TIME = "pwdAccountLockedTime"
 OPENLDAP_ACCOUNT_LOCKED_TIME = "pwdAccountLockedTime"
 LOCK_VALUE = "000001010000Z"
+
+JWT_SECRET = 'secret'
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRED_TIMEDELTA = datetime.timedelta(hours=8)
+JWT_LEEWAY = datetime.timedelta(minutes=10)
