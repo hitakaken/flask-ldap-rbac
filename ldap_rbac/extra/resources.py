@@ -60,9 +60,12 @@ class Resource(object):
     def can_control(self):
         pass
 
-    @abstractmethod
-    def get_path(self):
-        pass
+    @property
+    def path(self):
+        return '%s/%s' % (
+            '' if self.parent is None else self.parent.path,
+            self.name
+        )
 
     @abstractmethod
     def get_parent(self):
