@@ -3,9 +3,10 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 
 class ResourceInfo(object):
-    def __init__(self, name=None, owner=None, group=None, mode=None,
+    def __init__(self, name=None, id=None, owner=None, group=None, mode=None,
                  ctime=None, mtime=None, atime=None):
         self.name = name
+        self.id = id
         self.owner = owner
         self.group = group
         self.mode = mode
