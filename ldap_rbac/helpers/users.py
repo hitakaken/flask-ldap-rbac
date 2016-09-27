@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import ldap
+from ldap_rbac import exceptions
 from ldap_rbac.core import constants, utils
-from ldap_rbac.models import User, PWPolicy
 from ldap_rbac.core.helpers import BaseHelper
+from ldap_rbac.models import User, PWPolicy
 
 
 class UserHelper(BaseHelper):
@@ -45,6 +47,9 @@ class UserHelper(BaseHelper):
         else:
             super(UserHelper, self).setattr(user, key, value)
 
+    def load(self, user):
+        return user
+
     def lock(self, user):
         user.locked = True
         self.save(user)
@@ -65,9 +70,9 @@ class UserHelper(BaseHelper):
     def get_admin_roles(self,user):
         pass
 
-    def check_passwd(self, user, password):
+    def check_password(self, user, password):
         try:
-            GLOBAL_LDAP_CONNECTION.auth_conn.simple_bind_s(user.dn, password)
+            self.ldap.auth_conn.simple_bind_s(user.dn, password)
             return True
         except ldap.INVALID_CREDENTIALS:
             return False
@@ -81,14 +86,14 @@ class UserHelper(BaseHelper):
     def get_assigned_users(self,role, limit=0):
         pass
 
-    def change_password(self,user, oldpw, newpw, check=True):
-        user = read(user)
+    def change_password(self, user, oldpw, newpw, check=True):
+        user = self.load(user)
         if check and 'userpassword' in user.attrs:
-            if oldpw is None or not check_passwd(user, oldpw):
+            if oldpw is None or not self.check_password(user, oldpw):
                 raise exceptions.InvalidCredentials()
         if not check or 'userpassword' not in user.attrs:
             oldpw = None
-        GLOBAL_LDAP_CONNECTION.conn.passwd_s(user.dn, oldpw, newpw)
+        self.ldap.conn.passwd_s(user.dn, oldpw, newpw)
 
     def assign(self, user_role):
         pass
@@ -99,10 +104,10 @@ class UserHelper(BaseHelper):
     def get_user_roles(self, uid):
         pass
 
-    def authenticate(self, user, password):
-        user = read(user)
+    def authenticate(self, username, password):
+        user = self.load(username)
         if user is None:
             raise exceptions.UserNotFound()
-        if not check_passwd(user, password):
+        if not self.check_password(user, password):
             raise exceptions.InvalidCredentials()
         return user

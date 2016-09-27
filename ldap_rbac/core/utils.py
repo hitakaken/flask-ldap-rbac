@@ -84,7 +84,7 @@ def flatten(properties):
     flat = flatdict.FlatDict(properties, delimiter='.')
     result = []
     for k, v in six.iteritems(flat):
-        result.append('%s:%s' % (k, v))
+        result.append((k, v))
     return result
 
 

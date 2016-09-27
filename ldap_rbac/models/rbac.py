@@ -12,8 +12,8 @@ class User(PropertiesEntity):
     OBJECT_CLASS = ['top', 'inetOrgPerson', 'organizationalPerson',
                     'ftUserAttrs', 'ftProperties', 'ftMods', 'extensibleObject']
 
-    def __init__(self, dn=None, attrs=None):
-        super(User, self).__init__(dn=dn, attrs=attrs)
+    def __init__(self, dn=None, attrs=None, helper=None):
+        super(User, self).__init__(dn=dn, attrs=attrs, helper=helper)
         self.roles = []
 
 
@@ -23,8 +23,8 @@ class Role(PropertiesEntity):
     ROOT = 'ou=Roles,ou=RBAC'
     OBJECT_CLASS = ['top', 'ftRls', 'ftProperties', 'ftMods']
 
-    def __init__(self, dn=None, attrs=None):
-        super(Role, self).__init__(dn=dn, attrs=attrs)
+    def __init__(self, dn=None, attrs=None, helper=None):
+        super(Role, self).__init__(dn=dn, attrs=attrs, helper=helper)
 
 
 class UserRole(Constraint):
@@ -45,5 +45,28 @@ class PWPolicy(LdapEntity):
     ROOT = 'ou=Policies'
     OBJECT_CLASS = ['top', 'device', 'pwdPolicy', 'ftMods']
 
-    def __init__(self, dn=None, attrs=None):
-        super(PWPolicy, self).__init__(dn=dn, attrs=attrs)
+    def __init__(self, dn=None, attrs=None, helper=None):
+        super(PWPolicy, self).__init__(dn=dn, attrs=attrs, helper=helper)
+
+
+class PermObj(PropertiesEntity):
+    """Fortress Permission Objects"""
+    ID_FIELD = 'ftObjNm'
+    ROOT = 'ou=Permissions,ou=RBAC'
+    OBJECT_CLASS = ['top', 'organizationalUnit', 'ftObject', 'ftProperties', 'ftMods']
+
+    def __init__(self, dn=None, attrs=None, helper=None):
+        super(PermObj, self).__init__(dn=dn, attrs=attrs, helper=helper)
+
+
+class Permission(PropertiesEntity):
+    """Fortress Permissions"""
+    ID_FIELD = 'ftOpNm'
+    OBJECT_CLASS = ['top', 'organizationalRole', 'ftOperation', 'ftProperties', 'ftMods']
+
+    def __init__(self, dn=None, attrs=None, helper=None):
+        super(Permission, self).__init__(dn=dn, attrs=attrs, helper=helper)
+
+    @property
+    def ROOT(self):
+        return 'ou=%s,ou=Permissions,ou=RBAC' % self.attrs.get('ftObjNm', 'Unknown')

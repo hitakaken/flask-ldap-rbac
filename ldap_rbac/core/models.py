@@ -76,7 +76,10 @@ class PropertiesEntity(LdapEntity):
 
     def __setattr__(self, key, value):
         if key.lower() == 'properties' or key.lower() == 'props':
-            self.attrs.update({'ftProps': utils.flatten(value) if value is not None else []})
+            self.attrs.update({'ftProps': map(
+                lambda k, v: '%s:%s' % (k, v),
+                utils.flatten(value) if value is not None else [])
+            })
             self.update_props()
         else:
             LdapEntity.__setattr__(self, key, value)

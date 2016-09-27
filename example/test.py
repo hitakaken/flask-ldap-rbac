@@ -10,3 +10,5 @@ configs = ConfigHelper(connection, name='configs')
 users = UserHelper(connection, name='users')
 # 初始化
 connection.initialize()
+
+users.instance()
