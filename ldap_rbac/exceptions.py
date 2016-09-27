@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81
+from werkzeug.exceptions import BadRequest, ClientDisconnected, SecurityError, BadHost, \
+    Unauthorized, Forbidden, NotFound, MethodNotAllowed, NotAcceptable, RequestTimeout, Conflict, Gone, LengthRequired
 from ldap_rbac.patched import Namespace, fields
 
 api = Namespace('Error', description='错误')

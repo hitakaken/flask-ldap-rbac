@@ -91,6 +91,10 @@ REGISTER_OBJECT_CLASSES = {
     'groupOfNames': {
         'MUST': ['cn', 'member'],
         'MAY': ['businessCategory', 'description', 'o', 'ou', 'owner', 'seeAlso']
+    },
+    'configGroup': {
+        'MUST': ['configProtocol', 'ftType'],
+        'MAY': ['configParameter']
     }
 }
 

@@ -11,7 +11,7 @@ class LdapEntity(object):
     IGNORE_ATTR_TYPES = []
     ID_FIELD = 'ou'
     ROOT = ''
-    OBJECT_CLASS = ['top', 'organizationalUnit']
+    OB5ECT_CLASS = ['top', 'organizationalUnit']
 
     def __init__(self, dn=None, attrs=None, helper=None):
         self.__dict__['dn'] = dn
@@ -109,8 +109,9 @@ class Constraint(object):
         self.day_mask = day_mask
         self.begin_lock_date = begin_lock_date
         self.end_lock_date = end_lock_date
+        if 'raw_data' in kwargs:
+            self.parse(kwargs.get('raw_data'))
 
-    @abstractmethod
     def raw_data(self):
         return '%s$%s$%s$%s$%s$%s$%s$%s$%s' % (
             self.name,
@@ -135,92 +136,3 @@ class Constraint(object):
         self.begin_lock_date = utils.chunk(chunks, 6, mapping=utils.convert_string_to_integer)
         self.end_lock_date = utils.chunk(chunks, 7, mapping=utils.convert_string_to_integer)
         self.day_mask = utils.chunk(chunks, 8, mapping=utils.convert_string_to_integer)
-
-
-class Resource(object):
-    __metaclass__ = ABCMeta
-    permissions = []
-
-    @abstractmethod
-    def create(self):
-        pass
-
-    @abstractmethod
-    def delete(self):
-        pass
-
-    @abstractmethod
-    def exists(self):
-        pass
-
-    @abstractmethod
-    def get_name(self):
-        pass
-
-    @abstractmethod
-    def get_path(self):
-        pass
-
-    @abstractmethod
-    def get_parent(self):
-        pass
-
-    @abstractmethod
-    def is_directory(self):
-        pass
-
-    @abstractmethod
-    def is_file(self):
-        pass
-
-    @abstractmethod
-    def list(self):
-        pass
-
-    @abstractmethod
-    def mkdir(self):
-        pass
-
-    @abstractmethod
-    def last_modify(self):
-        pass
-
-    @abstractmethod
-    def content(self):
-        pass
-
-    @abstractmethod
-    def grant(self, who, permissions):
-        pass
-
-    @abstractmethod
-    def revoke(self, who, permissions):
-        pass
-
-    @abstractmethod
-    def revoke_all(self, who):
-        pass
-
-    @abstractmethod
-    def check(self, who, permission):
-        return False
-
-    @abstractmethod
-    def check_any(self, who, permissions):
-        return False
-
-    @abstractmethod
-    def check_all(self, who, permissions):
-        return False
-
-    @abstractmethod
-    def which(self, who):
-        pass
-
-    @abstractmethod
-    def show(self):
-        pass
-
-    @abstractmethod
-    def save(self):
-        pass

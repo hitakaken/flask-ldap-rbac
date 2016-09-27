@@ -267,6 +267,8 @@ class BaseHelper(object):
         return entry
 
     def getattr(self, entry, attr_name):
+        if attr_name == 'name':
+            return entry.attrs.get(entry.ID_FIELD, None)
         class_name = self.entity_class().__name__
         if attr_name in self.ldap.config.ENTITY_CLASSES[class_name]['ALL']:
             return entry.attrs[attr_name]
@@ -277,6 +279,9 @@ class BaseHelper(object):
             raise AttributeError
 
     def setattr(self, entry, key, value):
+        if key == 'name':
+            entry.attrs[entry.ID_FIELD] = value
+            return
         class_name = self.entity_class().__name__
         if key in self.ldap.config.ENTITY_CLASSES[class_name]['ALL']:
             entry.attrs[key] = value
@@ -356,4 +361,3 @@ class BaseHelper(object):
 
     def register(self):
         self.ldap.helpers[self.name] = self
-

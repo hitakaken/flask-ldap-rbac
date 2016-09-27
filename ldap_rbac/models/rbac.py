@@ -14,6 +14,7 @@ class User(PropertiesEntity):
 
     def __init__(self, dn=None, attrs=None):
         super(User, self).__init__(dn=dn, attrs=attrs)
+        self.roles = []
 
 
 class Role(PropertiesEntity):
@@ -36,9 +37,6 @@ class UserRole(Constraint):
                                            begin_lock_date=begin_lock_date, end_lock_date=end_lock_date, **kwargs)
         else:
             self.parse(raw_data)
-
-    def raw_data(self):
-        return super(UserRole, self).raw_data()
 
 
 class PWPolicy(LdapEntity):
