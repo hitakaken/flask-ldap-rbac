@@ -52,6 +52,7 @@ class LdapConnection(object):
         self.conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
         self.auth_conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
         if ldap_config.get('START_TLS', False):
+            self.conn.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
             self.conn.start_tls_s()
             self.auth_conn.start_tls_s()
         self.config.ROOT_DN = ldap_config['ROOT_DN']

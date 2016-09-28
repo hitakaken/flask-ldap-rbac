@@ -2,6 +2,7 @@ flask
 six
 python-ldap
 PyJWT
+flask-login
 flask-restplus
 apispec
 webargs
