@@ -9,6 +9,7 @@ import ldap.schema
 import schemas
 from ldap_rbac.core.models import LdapEntity
 import six
+import utils
 
 
 class LdapConfig(object):
@@ -264,6 +265,8 @@ class BaseHelper(object):
         self.get_dn(entry)
         if 'objectClass' not in entry.attrs:
             entry.attrs['objectClass'] = self.entity_class().OBJECT_CLASS
+        if cls.ID_FIELD not in entry.attrs:
+            entry.attrs[cls.ID_FIELD] = utils.rdn(entry.dn)
         return entry
 
     def getattr(self, entry, attr_name):
@@ -299,7 +302,10 @@ class BaseHelper(object):
         class_name = self.entity_class().__name__
         if constants.FT_IID in self.ldap.config.ENTITY_CLASSES[class_name]['MUST']:
             entry.iid()
+        entry.fill()
         self.ldap.create(dn, entry.attrs)
+        entry.cache()
+        return entry
 
     def find_one(self, entry_id):
         dn = self.id_to_dn(entry_id) if '=' not in entry_id else entry_id
@@ -346,14 +352,22 @@ class BaseHelper(object):
             entry = self.instance(attrs=dict)
         dn = self.get_dn(entry)
         self.ldap.update(dn, entry.attrs, entry.cached_attrs, ignore_attr_types=self.entity_class().IGNORE_ATTR_TYPES)
+        entry.cache()
+        return entry
 
     def save(self, entry):
         if isinstance(entry, dict):
             entry = self.instance(attrs=dict)
         if entry.cached_attrs is None:
-            self.create(entry)
+            origin_entry = self.find_one(entry.attrs.get(self.entity_class().ID_FIELD))
+            if origin_entry is None:
+                return self.create(entry)
+            else:
+                origin_entry.update(attrs=entry.attrs)
+                return self.update(origin_entry)
         else:
-            self.update(entry)
+            return self.update(entry)
+
 
     def delete(self, entry_id):
         # TODO

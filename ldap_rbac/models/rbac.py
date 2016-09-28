@@ -16,6 +16,12 @@ class User(PropertiesEntity):
         super(User, self).__init__(dn=dn, attrs=attrs, helper=helper)
         self.roles = []
 
+    def fill(self):
+        if 'cn' not in self.attrs:
+            self.attrs['cn'] = self.uid
+        if 'sn' not in self.attrs:
+            self.attrs['sn'] = self.uid
+
 
 class Role(PropertiesEntity):
     """Fortress Roles"""
@@ -26,12 +32,22 @@ class Role(PropertiesEntity):
     def __init__(self, dn=None, attrs=None, helper=None):
         super(Role, self).__init__(dn=dn, attrs=attrs, helper=helper)
 
+    def fill(self):
+        if 'ftRoleName' not in self.attrs and 'cn' in self.attrs:
+            self.attrs['ftRoleName'] = self.cn
+        if 'cn' not in self.attrs and 'ftRoleName' in self.attrs:
+            self.attrs['cn'] = self.ftRoleName
+
 
 class UserRole(Constraint):
-    def __init__(self, name=None, timeout=None, begin_time=None, end_time=None, begin_date=None,
+    def __init__(self, user=None, role=None,
+                 name=None, timeout=None, begin_time=None, end_time=None, begin_date=None,
                  end_date=None, day_mask=None, begin_lock_date=None, end_lock_date=None,
                  raw_data=None, **kwargs):
-        if raw_data is not None:
+        self.user = user
+        if name is None and role is not None:
+            name = role.name
+        if raw_data is None:
             super(UserRole, self).__init__(name=name, timeout=timeout, begin_time=begin_time, end_time=end_time,
                                            begin_date=begin_date, end_date=end_date, day_mask=day_mask,
                                            begin_lock_date=begin_lock_date, end_lock_date=end_lock_date, **kwargs)

@@ -47,6 +47,9 @@ class LdapEntity(object):
             self.attrs[constants.FT_IID] = [utils.uuid()]
         return self.attrs[constants.FT_IID][0]
 
+    def fill(self):
+        pass
+
     def update(self, attrs):
         for k, v in six.iteritems(attrs):
             setattr(self, k, v)

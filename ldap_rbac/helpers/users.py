@@ -3,7 +3,7 @@ import ldap
 from ldap_rbac import exceptions
 from ldap_rbac.core import constants, utils
 from ldap_rbac.core.helpers import BaseHelper
-from ldap_rbac.models import User, PWPolicy
+from ldap_rbac.models import User, UserRole, PWPolicy
 
 
 class UserHelper(BaseHelper):
@@ -62,10 +62,13 @@ class UserHelper(BaseHelper):
         pass
 
     def get_roles(self, user):
-        pass
+        return [] if constants.USER_ROLE_ASSIGN not in user.attrs else map(
+            lambda raw_data: UserRole(user=user, raw_data=raw_data),
+            user.attrs[constants.USER_ROLE_DATA]
+        )
 
     def get_role_names(self, user):
-        pass
+        return [] if constants.USER_ROLE_ASSIGN not in user.attrs else user.attrs[constants.USER_ROLE_ASSIGN]
 
     def get_admin_roles(self,user):
         pass
@@ -80,10 +83,10 @@ class UserHelper(BaseHelper):
     def check_pw_policies(self, user):
         pass
 
-    def get_authorized_users(self,role, limit=0):
+    def get_authorized_users(self, role, limit=0):
         pass
 
-    def get_assigned_users(self,role, limit=0):
+    def get_assigned_users(self, role, limit=0):
         pass
 
     def change_password(self, user, oldpw, newpw, check=True):
@@ -96,10 +99,25 @@ class UserHelper(BaseHelper):
         self.ldap.conn.passwd_s(user.dn, oldpw, newpw)
 
     def assign(self, user_role):
-        pass
+        if constants.USER_ROLE_ASSIGN not in user_role.user.attrs:
+            user_role.user.attrs[constants.USER_ROLE_ASSIGN] = []
+        user_role.user.attrs[constants.USER_ROLE_ASSIGN].append(user_role.name)
+        if constants.USER_ROLE_DATA not in user_role.user.attrs:
+            user_role.user.attrs[constants.USER_ROLE_DATA] = []
+        user_role.user.attrs[constants.USER_ROLE_DATA].append(user_role.raw_data())
+        return self
 
     def deassign(self, user_role):
-        pass
+        user_roles = self.get_roles(user_role.user)
+        if len(user_roles) > 0:
+            idx = -1
+            for i, role in enumerate(user_roles):
+                if role.name == user_role.name:
+                    idx = i
+                    break
+            if idx > 0:
+                user_role.user.attrs[constants.USER_ROLE_ASSIGN].pop(idx)
+                user_role.user.attrs[constants.USER_ROLE_DATA].pop(idx)
 
     def get_user_roles(self, uid):
         pass

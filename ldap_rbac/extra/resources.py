@@ -22,7 +22,7 @@ class Resource(object):
         self.links = links
         self.blocks = blocks
         self.helper = helper
-        self.loaded_info = None
+        self.loaded = False
         self.loaded_acls = None
         self.loaded_xattrs = None
         self.loaded_tags = None
@@ -30,13 +30,13 @@ class Resource(object):
     @property
     def acls(self, force=False):
         if self.loaded_acls is None or force:
-            self.loaded_acls = self.helper.load_acls(self)
+            self.helper.load_acls(self)
         return self.loaded_acls
 
     @property
     def xattrs(self, force=False):
         if self.loaded_xattrs is None or force:
-            self.loaded_xattrs = self.helper.load_xattrs(self)
+            self.helper.load_xattrs(self)
         return self.loaded_xattrs
 
     @property
@@ -117,7 +117,7 @@ class ResourceHelper(object):
 
     def load_acls(self, resource):
         if self.is_acl_support:
-            return self.acls.load(resource)
+            self.acls.load(resource)
         pass
 
     def add_acls(self, resource, aces, user=None):
@@ -138,8 +138,8 @@ class ResourceHelper(object):
         else:
             pass
 
-    @staticmethod
-    def is_xattr_support():
+    @property
+    def is_xattr_support(self):
         return False
 
     @abstractmethod
@@ -189,9 +189,9 @@ class ResourceHelper(object):
     def is_log_support(self):
         return self.logger is not None
 
-    @abstractmethod
     def log(self, resource, event=None, user=None, **kwargs):
-        pass
+        if self.is_log_support:
+            self.logger.log(resource, event=None, user=None, **kwargs)
 
     @abstractmethod
     def instance(self, parent=None, name=None, **kwargs):
@@ -225,9 +225,6 @@ class ResourceHelper(object):
     def delete(self, path, user=None, **kwargs):
         pass
 
-    @abstractmethod
-    def log(self, resource, user=None, action=None, **kwargs):
-        pass
 
     def save(self, resource, **kwargs):
         pass
