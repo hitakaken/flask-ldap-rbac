@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bson.objectid import ObjectId
+import calendar
 import datetime as dt
 import flatdict
 import six
@@ -142,3 +143,13 @@ def chunk(chunks, index, default=None, mapping=None):
 
 def convert_string_to_integer(text, default=None):
     return default if text is None or len(text) == 0 else int(text)
+
+epoch = dt.datetime(1970, 1, 1)
+
+
+def to_timestamp(utc_time):
+    return calendar.timegm(utc_time.utctimetuple())
+
+
+def to_datetime(ts):
+    return dt.datetime.fromtimestamp(ts)

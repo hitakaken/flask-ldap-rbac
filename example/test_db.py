@@ -12,4 +12,8 @@ db = TinyDB(settings.RESOURCE_SOURCE)
 
 resources = TinyDbResources(db=db)
 
+bills = resources.instance(name='bills')
+
+print resources.exists(path=bills.path, user=user)
+
 

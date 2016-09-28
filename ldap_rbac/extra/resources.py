@@ -2,6 +2,7 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from ldap_rbac.core import constants
 
+
 class Resource(object):
     __metaclass__ = ABCMeta
 
@@ -203,9 +204,24 @@ class ResourceHelper(object):
         if self.is_log_support:
             self.logger.log(resource, event=event, user=user, **kwargs)
 
-    @abstractmethod
+    def rel_path(self, path):
+        return path[len(self.root.path):]
+
+    def instance_by_path(self, path):
+        if not path.startswith(self.root.path):
+            return None
+        rel_path = self.rel_path(path)
+        if len(rel_path) == 0:
+            return self.root
+        names = rel_path.split('/')
+        current = self.root
+        for idx in range(0, len(names)):
+            current = Resource(parent=current, name=names[idx], helper=self)
+        return current
+
     def instance(self, parent=None, name=None, **kwargs):
-        pass
+        parent = self.root if parent is None else parent
+        return Resource(parent=parent, name=name, helper=self, **kwargs)
 
     @abstractmethod
     def create(self, resource, user=None, **kwargs):
@@ -213,17 +229,21 @@ class ResourceHelper(object):
 
     @abstractmethod
     def find_by_path(self, path, **kwargs):
-        pass
+        if path == self.root.path:
+            return self.root
+        return None
 
     @abstractmethod
     def find_by_id(self, rid, **kwargs):
-        pass
+        if rid == self.root.rid:
+            return self.root
+        return None
 
     def find_one(self, path=None, rid=None, **kwargs):
         if path is not None:
             return self.find_by_path(path=path, **kwargs)
         if rid is not None:
-            return self.find_by_path(rid=rid, **kwargs)
+            return self.find_by_id(rid=rid, **kwargs)
 
     @abstractmethod
     def find_all(self, query, **kwargs):
@@ -242,8 +262,4 @@ class ResourceHelper(object):
 
     @abstractmethod
     def delete(self, path, user=None, **kwargs):
-        pass
-
-
-    def save(self, resource, **kwargs):
         pass
