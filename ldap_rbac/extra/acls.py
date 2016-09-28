@@ -170,3 +170,7 @@ class AccessControlListHelper(object):
     @abstractmethod
     def save(self, resource):
         pass
+
+    @staticmethod
+    def sids_of(who):
+        return sids_of(who)

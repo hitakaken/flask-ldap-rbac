@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from ldap_rbac.core import utils
 from resources import Resource, ResourceHelper
 from acls import AccessControlList, AccessControlListHelper
 from tags import TagsHelper
@@ -82,13 +83,25 @@ class TinyDbResources(ResourceHelper):
                and self.tags.db == self.db and self.tags.table is None
 
     def query_of_user(self, user=None):
-        pass
+        sids = self.acls.sids_of(user)
+        query = Query()
+
+        def check_aces(aces):
+            for ace in aces:
+                for sid in sids:
+                    if ace.startswith(sid):
+                        return True
+            return False
+
+        return (query.owner.test(lambda owner: owner in sids)) | \
+               (query.acls.test(check_aces))
 
     def query(self, dsl):
         pass
 
     def create(self, resource, user=None, **kwargs):
-        pass
+        if resource.rid is None:
+            resource.rid = utils.uuid()
 
     def load(self, resource, result):
         changes = []
@@ -154,16 +167,29 @@ class TinyDbResources(ResourceHelper):
         if result is None:
             return result
         resource = self.instance_by_path(rel_path)
-        self.load(resource, result)
+        resource, changes = self.load(resource, result)
+        return resource
 
     def find_by_id(self, rid, **kwargs):
-        pass
+        query = Query()
+        result = self.db.get(query.rid == rid)
+        if result is None:
+            return result
+        resource = self.instance_by_path(self.root.path + result.get('path'))
+        resource, changes = self.load(resource, result)
+        return resource
 
     def find_all(self, query, **kwargs):
-        pass
+        results = self.db.search(query)
+        temp = []
+        for result in results:
+            resource = self.instance_by_path(self.root.path + result.get('path'))
+            resource, changes = self.load(resource, result)
+            temp.append(resource)
+        return temp
 
     def count(self, query, **kwargs):
-        pass
+        return self.db.count(query)
 
     def update(self, resource, user=None, **kwargs):
         pass

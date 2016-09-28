@@ -45,7 +45,7 @@ class LdapConnection(object):
                 if 'CACERTFILE' in options:
                     ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, options['CACERTFILE'])
         self.config.LDAP_URL = ldap_config.get('URI', self.config.LDAP_URL)
-        self.conn = ldap.initialize(self.config.LDAP_URL, trace_level=ldap_config.get('TRACE_LEVEL', 1))
+        self.conn = ldap.initialize(self.config.LDAP_URL, trace_level=ldap_config.get('TRACE_LEVEL', 0))
         self.auth_conn = ldap.initialize(self.config.LDAP_URL)
         self.conn.protocol_version = ldap.VERSION3
         self.auth_conn.protocol_version = ldap.VERSION3

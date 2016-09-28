@@ -8,6 +8,18 @@ class Tag(object):
         self.sid = sid
         self.ctime = ctime
 
+    def __str__(self):
+        return '%s$%s$%s' % (
+            self.name,
+            self.sid if self.sid is not None else '',
+            str(self.ctime)
+        )
+
+
+def tag_of(text, splitter='$'):
+    name, sid, ctime = text.split(splitter)
+    return Tag(name=name, sid=sid, ctime=int(ctime))
+
 
 class TagsHelper(object):
     __metaclass__ = ABCMeta
