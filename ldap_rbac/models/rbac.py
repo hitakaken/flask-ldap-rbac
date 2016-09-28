@@ -23,11 +23,17 @@ class User(PropertiesEntity):
             self.attrs['sn'] = self.uid
 
 
+class RBAC(LdapEntity):
+    ID_FIELD = 'ou'
+    ROOT = 'ou=RBAC'
+
+
 class Role(PropertiesEntity):
     """Fortress Roles"""
     ID_FIELD = 'cn'
     ROOT = 'ou=Roles,ou=RBAC'
     OBJECT_CLASS = ['top', 'ftRls', 'ftProperties', 'ftMods']
+    PARENT = RBAC
 
     def __init__(self, dn=None, attrs=None, helper=None):
         super(Role, self).__init__(dn=dn, attrs=attrs, helper=helper)

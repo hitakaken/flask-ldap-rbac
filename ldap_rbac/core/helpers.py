@@ -231,6 +231,11 @@ class LdapConnection(object):
         self.load_entity_classes(entity_classes)
         for entity_class in entity_classes:
             if not self.exists(self.root_dn(entity_class)):
+                if hasattr(entity_class, 'PARENT'):
+                    parent_class = entity_class.PARENT
+                    if not self.exists(self.root_dn(parent_class)):
+                        dn, attrs = self.root_entry(parent_class)
+                        self.create(dn, attrs)
                 dn, attrs = self.root_entry(entity_class)
                 self.create(dn, attrs)
 
