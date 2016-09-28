@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta, abstractmethod, abstractproperty
-
+from ldap_rbac.core import constants
 
 class Resource(object):
     __metaclass__ = ABCMeta
@@ -100,6 +100,12 @@ class ResourceHelper(object):
 
     def __init__(self, root=None, acls=None, tags=None, logger=None,
                  enable_access_log=True, enable_operation_log=False):
+        if root is None:
+            root = Resource(name='', rid='ROOT',
+                            owner=constants.SECURITY_IDENTITY_ROLE_PREFIX + constants.ROLE_NAME_ADMIN,
+                            group=constants.SECURITY_IDENTITY_ROLE_PREFIX + constants.ROLE_NAME_LOGIN_USER,
+                            mode=0b111100000, children=[], ctime=0, mtime=0, atime=0, links=[], blocks=[],
+                            helper=self)
         self.root = root
         self.acls = acls
         self.tags = tags
@@ -108,7 +114,11 @@ class ResourceHelper(object):
         self.enable_operation_log = enable_operation_log
 
     @abstractmethod
-    def filter_of_user(self, user=None):
+    def query_of_user(self, user=None):
+        pass
+
+    @abstractmethod
+    def query(self, dsl):
         pass
 
     @property
@@ -191,7 +201,7 @@ class ResourceHelper(object):
 
     def log(self, resource, event=None, user=None, **kwargs):
         if self.is_log_support:
-            self.logger.log(resource, event=None, user=None, **kwargs)
+            self.logger.log(resource, event=event, user=user, **kwargs)
 
     @abstractmethod
     def instance(self, parent=None, name=None, **kwargs):
@@ -202,8 +212,18 @@ class ResourceHelper(object):
         pass
 
     @abstractmethod
-    def find_one(self, path=None, rid=None, **kwargs):
+    def find_by_path(self, path, **kwargs):
         pass
+
+    @abstractmethod
+    def find_by_id(self, rid, **kwargs):
+        pass
+
+    def find_one(self, path=None, rid=None, **kwargs):
+        if path is not None:
+            return self.find_by_path(path=path, **kwargs)
+        if rid is not None:
+            return self.find_by_path(rid=rid, **kwargs)
 
     @abstractmethod
     def find_all(self, query, **kwargs):
@@ -213,9 +233,8 @@ class ResourceHelper(object):
     def count(self, query, **kwargs):
         pass
 
-    @abstractmethod
-    def exists(self, path=None, rid=None, user=None, **kwargs):
-        pass
+    def exists(self, path=None, rid=None, **kwargs):
+        return self.find_one(path=path, rid=rid, **kwargs) is not None
 
     @abstractmethod
     def update(self, resource, user=None, **kwargs):

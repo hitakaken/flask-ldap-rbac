@@ -2,6 +2,7 @@
 import datetime
 from ldap_rbac import exceptions
 from ldap_rbac.core import constants
+from ldap_rbac.models import TokenUser
 import jwt
 import msgpack
 
@@ -18,13 +19,16 @@ def get_callback_function(func, default_function=None, default_return=None):
 
 
 class TokenHelper(object):
-    def __init__(self, jwt_config=None):
+    def __init__(self, jwt_config=None, token_config=None):
         if jwt_config is None:
             jwt_config = {}
+        if token_config is None:
+            token_config = {}
         self.jwt_secret = get_callback_function(jwt_config.get('secret', constants.JWT_SECRET))
         self.jwt_algorithm = get_callback_function(jwt_config.get('algorithm', constants.JWT_ALGORITHM))
         self.jwt_expired = get_callback_function(jwt_config.get('expired', constants.JWT_EXPIRED_TIMEDELTA))
         self.jwt_leeway = get_callback_function(jwt_config.get('leeway', constants.JWT_LEEWAY))
+        self.token_header = token_config.get('HEADER', 'AUTH')
 
     def encode(self, payload, **kwargs):
         """生成JWT令牌"""
@@ -57,7 +61,19 @@ class TokenHelper(object):
         return msgpack.unpackb(encrypted, **kwargs)
 
     def load_user_from_request(self, request):
-        pass
+        payload = self.decode(request.headers.get(self.token_header))
+        info = self.decrypt(payload.get('info'))
+        return TokenUser(name=payload.get('name'), uid=info.get('id'), roles=info.get('roles'), helper=self)
 
-    def user_token(self, user):
-        pass
+    def token_user(self, user):
+        return TokenUser(name=user.name, uid=user.id, roles=user.roles, helper=self)
+
+    def token(self, user):
+        user = self.token_user(user)
+        return self.decode({
+            'name': user.name,
+            'info': self.encrypt({
+                'id': user.id,
+                'roles': user.roles
+            })
+        })

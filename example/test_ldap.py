@@ -15,7 +15,8 @@ connection.initialize()
 
 kcao = users.instance(attrs={
     'uid': 'kcao',
-    'sn': ['kcao', 'kcao@libnet.sh.cn', '13651649647', 'wx1341234']
+    'sn': ['kcao', 'kcao@libnet.sh.cn', '13651649647', 'wx1341234'],
+    'mail': ['kcao@libnet.sh.cn', 'hitakaken@gmail.com']
 })
 
 users.save(kcao)
