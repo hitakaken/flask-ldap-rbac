@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from abc import ABCMeta, abstractmethod
 from ldap_rbac.core import constants
 from ldap_rbac.models import User, Role, Group, TokenUser
 
@@ -145,3 +146,27 @@ class AccessControlList(object):
             if self.is_manager(who, permission, oid=oid):
                 mask |= permission
         return mask
+
+
+class AccessControlListHelper(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def load(self, resource, force=False):
+        pass
+
+    @abstractmethod
+    def add(self, resource, aces, user=None):
+        pass
+
+    @abstractmethod
+    def remove(self, resource, aces, user=None):
+        pass
+
+    @abstractmethod
+    def clear(self, resource):
+        pass
+
+    @abstractmethod
+    def save(self, resource):
+        pass

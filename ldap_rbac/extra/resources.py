@@ -2,36 +2,30 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 
-class ResourceInfo(object):
-    def __init__(self, name=None, id=None, owner=None, group=None, mode=None,
-                 ctime=None, mtime=None, atime=None):
+class Resource(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self, parent=None, name=None, rid=None,
+                 owner=None, group=None, mode=None, children=None,
+                 ctime=None, mtime=None, atime=None, links=None, blocks=None,
+                 helper=None):
+        self.parent = parent
         self.name = name
-        self.id = id
+        self.rid = rid
         self.owner = owner
         self.group = group
+        self.children = children
         self.mode = mode
         self.ctime = ctime
         self.mtime = mtime
         self.atime = atime
-
-
-class Resource(object):
-    __metaclass__ = ABCMeta
-
-    def __init__(self, parent, name, helper=None):
-        self.parent = parent
-        self.name = name
+        self.links = links
+        self.blocks = blocks
         self.helper = helper
         self.loaded_info = None
         self.loaded_acls = None
         self.loaded_xattrs = None
         self.loaded_tags = None
-
-    @property
-    def info(self, force=False):
-        if self.loaded_info is None or force:
-            self.loaded_info = self.helper.load_info(self)
-        return self.loaded_info
 
     @property
     def acls(self, force=False):
@@ -51,13 +45,34 @@ class Resource(object):
             self.loaded_tags = self.helper.load_tags(self)
         return self.loaded_tags
 
-    def can_read(self):
+    def can_read(self, user=None):
         pass
 
-    def can_write(self):
+    def can_grant_read(self, user=None):
         pass
 
-    def can_control(self):
+    def can_write(self, user=None):
+        pass
+
+    def can_grant_write(self, user=None):
+        pass
+
+    def can_info(self, user=None):
+        pass
+
+    def can_list(self, user=None):
+        pass
+
+    def can_read_tags(self, user=None):
+        pass
+
+    def can_write_tags(self, user=None):
+        pass
+
+    def can_grant_read_tags(self, user=None):
+        pass
+
+    def can_grant_write_tags(self, user=None):
         pass
 
     @property
@@ -68,64 +83,60 @@ class Resource(object):
         )
 
     @abstractmethod
-    def get_parent(self):
-        pass
+    def is_branch(self):
+        return self.children is not None
 
     @abstractmethod
-    def is_directory(self):
-        pass
-
-    @abstractmethod
-    def is_file(self):
-        pass
-
-    @abstractmethod
-    def list(self):
-        pass
-
-    @abstractmethod
-    def mkdir(self):
-        pass
-
-    @abstractmethod
-    def last_modify(self):
-        pass
+    def is_leaf(self):
+        return self.children is None
 
     @abstractmethod
     def data(self):
-        pass
-
-    @abstractmethod
-    def save(self):
         pass
 
 
 class ResourceHelper(object):
     __metaclass__ = ABCMeta
 
+    def __init__(self, root=None, acls=None, tags=None, logger=None,
+                 enable_access_log=True, enable_operation_log=False):
+        self.root = root
+        self.acls = acls
+        self.tags = tags
+        self.logger = logger
+        self.enable_access_log = enable_access_log
+        self.enable_operation_log = enable_operation_log
+
     @abstractmethod
-    def load_info(self, resource):
+    def filter_of_user(self, user=None):
         pass
 
-    @staticmethod
-    def is_acl_support():
-        return False
+    @property
+    def is_acl_support(self):
+        return self.acls is not None
 
-    @abstractmethod
     def load_acls(self, resource):
+        if self.is_acl_support:
+            return self.acls.load(resource)
         pass
 
-    @abstractmethod
-    def add_acls(self, resource, aces):
-        pass
+    def add_acls(self, resource, aces, user=None):
+        if self.is_acl_support:
+            self.acls.add(resource, aces, user=user)
+        else:
+            pass
 
-    @abstractmethod
-    def remove_acls(self, resource, sids):
-        pass
+    def remove_acls(self, resource, sids, user=None):
+        if self.is_acl_support:
+            self.acls.add(resource, sids, user=user)
+        else:
+            pass
 
-    @abstractmethod
-    def clear_acls(self, resource):
-        pass
+    def clear_acls(self, resource, user=None):
+        if self.is_acl_support:
+            self.acls.clear(resource, user=user)
+        else:
+            pass
 
     @staticmethod
     def is_xattr_support():
@@ -147,36 +158,43 @@ class ResourceHelper(object):
     def clear_xattrs(self, resource):
         pass
 
-    @staticmethod
-    def is_tag_support():
-        return False
+    @property
+    def is_tag_support(self):
+        return self.acls is not None
 
-    @abstractmethod
     def load_tags(self, resource):
+        if self.is_tag_support:
+            return self.tags.load(resource)
         pass
 
-    @abstractmethod
-    def add_tags(self, resource, tags):
-        pass
+    def add_tags(self, resource, tags, user=None):
+        if self.is_tag_support:
+            self.tags.add(resource, tags, user=user)
+        else:
+            pass
 
-    @abstractmethod
-    def remove_tags(self, resource, tags):
-        pass
+    def remove_tags(self, resource, tags, user=None):
+        if self.is_tag_support:
+            self.tags.remove(resource, tags, user=user)
+        else:
+            pass
 
-    @abstractmethod
-    def clear_tags(self, resource):
-        pass
+    def clear_tags(self, resource, user=None):
+        if self.is_tag_support:
+            self.tags.clear(resource, user=user)
+        else:
+            pass
 
-    @staticmethod
+    @property
     def is_log_support(self):
-        return False
+        return self.logger is not None
 
     @abstractmethod
-    def log(self, resource, event):
+    def log(self, resource, event=None, user=None, **kwargs):
         pass
 
     @abstractmethod
-    def instance(self, parent=None, name=None, user=None, **kwargs):
+    def instance(self, parent=None, name=None, **kwargs):
         pass
 
     @abstractmethod
@@ -184,19 +202,19 @@ class ResourceHelper(object):
         pass
 
     @abstractmethod
-    def find_one(self, path, user=None, **kwargs):
+    def find_one(self, path=None, rid=None, **kwargs):
         pass
 
     @abstractmethod
-    def find_all(self, query, user=None, **kwargs):
+    def find_all(self, query, **kwargs):
         pass
 
     @abstractmethod
-    def count(self, query):
+    def count(self, query, **kwargs):
         pass
 
     @abstractmethod
-    def exists(self, path, user=None, **kwargs):
+    def exists(self, path=None, rid=None, user=None, **kwargs):
         pass
 
     @abstractmethod
@@ -208,7 +226,7 @@ class ResourceHelper(object):
         pass
 
     @abstractmethod
-    def log(self, resource, user=None, **kwargs):
+    def log(self, resource, user=None, action=None, **kwargs):
         pass
 
     def save(self, resource, **kwargs):
