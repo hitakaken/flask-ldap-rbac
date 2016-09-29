@@ -10,6 +10,7 @@ PERMISSIONS = [
     constants.PERMISSION_DELETE_MASK,
     constants.PERMISSION_LIST_MASK,
     constants.PERMISSION_INFO_MASK,
+    constants.PERMISSION_X_WRITE_MASK
 ]
 
 

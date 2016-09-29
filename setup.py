@@ -37,7 +37,7 @@ setup(
         'ldap_rbac/controllers',
         'ldap_rbac/core',
         'ldap_rbac/extensions',
-        'ldap_rbac/extra',
+        'ldap_rbac/resources',
         'ldap_rbac/helpers',
         'ldap_rbac/manager',
         'ldap_rbac/models',

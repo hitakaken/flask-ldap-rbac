@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from ldap_rbac.core import utils
-from resources import Resource, ResourceHelper
-from acls import AccessControlList, AccessControlListHelper
-from tags import TagsHelper
-from logger import ResourceLogger
 from tinydb import Query
+
+from ldap_rbac.resources.acls import AccessControlList, AccessControlListHelper
+from ldap_rbac.resources.logger import ResourceLogger
+from ldap_rbac.resources.tags import TagsHelper
+from ldap_rbac.extra.resources import ResourceHelper
 
 
 class TinyDbAccessControlList(AccessControlListHelper):
