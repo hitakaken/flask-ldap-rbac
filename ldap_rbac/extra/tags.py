@@ -43,3 +43,8 @@ class TagsHelper(object):
     @abstractmethod
     def save(self, resource):
         pass
+
+    @staticmethod
+    def tag_of(text, splitter='$'):
+        return tag_of(text, splitter=splitter)
+

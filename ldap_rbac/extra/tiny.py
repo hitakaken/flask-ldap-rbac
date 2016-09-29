@@ -10,19 +10,18 @@ from tinydb import Query
 class TinyDbAccessControlList(AccessControlListHelper):
     def __init__(self, db=None, table=None):
         self.db = db
-        self.table=table
+        self.table = table
+
+    def db(self):
+        return self.table if self.table is not None else self.db
 
     def load(self, resource, force=False):
-        pass
-
-    def add(self, resource, aces, user=None):
-        pass
-
-    def remove(self, resource, aces, user=None):
-        pass
-
-    def clear(self, resource):
-        pass
+        if (resource.loaded_acls is not None and not force) or \
+                (isinstance(resource.helper, TinyDbResources) and resource.helper.db == self.db and self.table is None):
+            return
+        query = Query()
+        result = self.db().get(query.rid == resource.rid)
+        resource.loaded_acls = AccessControlList(ace_text_list=[] if result is None else result.get('acls', []))
 
     def save(self, resource):
         pass
@@ -100,8 +99,9 @@ class TinyDbResources(ResourceHelper):
         pass
 
     def create(self, resource, user=None, **kwargs):
-        if resource.rid is None:
-            resource.rid = utils.uuid()
+        if not resource.root.loaded:
+            resource.root = self.find_by_path(resource.root.path)
+        resource.fill(user==user)
 
     def load(self, resource, result):
         changes = []
@@ -146,13 +146,13 @@ class TinyDbResources(ResourceHelper):
         elif resource.blocks != result.get('blocks'):
             changes.append('blocks')
         if resource.loaded_xattrs is None:
-            resource.loaded_xattrs = result.get('xattrs')
+            resource.loaded_xattrs = result.get('xattrs', {})
         elif resource.loaded_xattrs != result.get('xattrs'):
             changes.append('xattrs')
         if self.is_acl_together():
-            resource.loaded_acls = AccessControlList(ace_text_list=result.get('acls'))
+            resource.loaded_acls = AccessControlList(ace_text_list=result.get('acls', []))
         if self.is_tag_together():
-            resource.loaded_tags = None
+            resource.loaded_tags = map(self.tags.tag_of, result.get('tags', []))
         resource.loaded = True
         return resource, changes
 
@@ -191,20 +191,16 @@ class TinyDbResources(ResourceHelper):
     def count(self, query, **kwargs):
         return self.db.count(query)
 
+    def list(self, resource):
+        pass
+
     def update(self, resource, user=None, **kwargs):
         pass
 
     def delete(self, path, user=None, **kwargs):
         pass
 
-    def update_xattrs(self, resource, xattrs):
-        pass
-
     def load_xattrs(self, resource):
         pass
 
-    def clear_xattrs(self, resource):
-        pass
 
-    def remove_xattrs(self, resource, keys):
-        pass

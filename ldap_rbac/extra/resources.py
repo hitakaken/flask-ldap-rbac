@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta, abstractmethod, abstractproperty
-from ldap_rbac.core import constants
+
+import datetime
+
+import acls
+from ldap_rbac.core import constants, utils
+
 
 
 class Resource(object):
@@ -27,6 +32,34 @@ class Resource(object):
         self.loaded_acls = None
         self.loaded_xattrs = None
         self.loaded_tags = None
+
+    def fill(self, user=None):
+        if self.rid is None:
+            self.rid = utils.uuid()
+        if self.owner is None:
+            self.set_owner(user)
+        if self.group is None and user.group is not None:
+            self.group = constants.SECURITY_IDENTITY_GROUP_PREFIX + user.group
+        if self.mode is None:
+            self.mode = 0b111100000
+        ts = utils.to_timestamp(datetime.datetime.utcnow())
+        if self.ctime is None:
+            self.ctime = ts
+        if self.mtime is None:
+            self.mtime = ts
+        if self.atime is None:
+            self.atime = ts
+        if self.links is None:
+            self.links = []
+        if self.blocks is None:
+            self.blocks = []
+
+    def set_owner(self, user=None):
+        self.owner = acls.sid_of(user)
+
+    def is_owner_of(self, user=None):
+        sids = acls.sids_of(user)
+        return self.owner in sids
 
     @property
     def acls(self, force=False):
@@ -108,6 +141,7 @@ class ResourceHelper(object):
                             mode=0b111100000, children=[], ctime=0, mtime=0, atime=0, links=[], blocks=[],
                             helper=self)
         self.root = root
+        self.root.loaded = True
         self.acls = acls
         self.tags = tags
         self.logger = logger
@@ -157,17 +191,18 @@ class ResourceHelper(object):
     def load_xattrs(self, resource):
         pass
 
-    @abstractmethod
     def update_xattrs(self, resource, xattrs):
-        pass
+        self.load_xattrs(resource)
+        resource.loaded_xattrs.update(xattrs)
 
-    @abstractmethod
     def remove_xattrs(self, resource, keys):
-        pass
+        self.load_xattrs(resource)
+        for key in keys:
+            if key in resource.loaded_xattrs:
+                del resource.loaded_xattrs[key]
 
-    @abstractmethod
     def clear_xattrs(self, resource):
-        pass
+        resource.loaded_xattrs = {}
 
     @property
     def is_tag_support(self):
@@ -255,6 +290,10 @@ class ResourceHelper(object):
 
     def exists(self, path=None, rid=None, **kwargs):
         return self.find_one(path=path, rid=rid, **kwargs) is not None
+
+    @abstractmethod
+    def list(self, resource):
+        pass
 
     @abstractmethod
     def update(self, resource, user=None, **kwargs):
