@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+from abc import ABCMeta, abstractmethod
+from ldap_rbac.core import constants
+from models import Resource
+
 
 class ResourceHelper(object):
     __metaclass__ = ABCMeta
@@ -18,6 +23,10 @@ class ResourceHelper(object):
         self.enable_access_log = enable_access_log
         self.enable_operation_log = enable_operation_log
 
+    @property
+    def type(self):
+        return 'Base'
+
     @abstractmethod
     def query_of_user(self, user=None):
         pass
@@ -30,28 +39,13 @@ class ResourceHelper(object):
     def is_acl_support(self):
         return self.acls is not None
 
+    @property
+    def is_acl_together(self):
+        return False
+
     def load_acls(self, resource):
         if self.is_acl_support:
             self.acls.load(resource)
-        pass
-
-    def add_acls(self, resource, aces, user=None):
-        if self.is_acl_support:
-            self.acls.add(resource, aces, user=user)
-        else:
-            pass
-
-    def remove_acls(self, resource, sids, user=None):
-        if self.is_acl_support:
-            self.acls.add(resource, sids, user=user)
-        else:
-            pass
-
-    def clear_acls(self, resource, user=None):
-        if self.is_acl_support:
-            self.acls.clear(resource, user=user)
-        else:
-            pass
 
     @property
     def is_xattr_support(self):
@@ -61,45 +55,17 @@ class ResourceHelper(object):
     def load_xattrs(self, resource):
         pass
 
-    def update_xattrs(self, resource, xattrs):
-        self.load_xattrs(resource)
-        resource.loaded_xattrs.update(xattrs)
-
-    def remove_xattrs(self, resource, keys):
-        self.load_xattrs(resource)
-        for key in keys:
-            if key in resource.loaded_xattrs:
-                del resource.loaded_xattrs[key]
-
-    def clear_xattrs(self, resource):
-        resource.loaded_xattrs = {}
-
     @property
     def is_tag_support(self):
         return self.acls is not None
 
+    @property
+    def is_tag_together(self):
+        return False
+
     def load_tags(self, resource):
         if self.is_tag_support:
             return self.tags.load(resource)
-        pass
-
-    def add_tags(self, resource, tags, user=None):
-        if self.is_tag_support:
-            self.tags.add(resource, tags, user=user)
-        else:
-            pass
-
-    def remove_tags(self, resource, tags, user=None):
-        if self.is_tag_support:
-            self.tags.remove(resource, tags, user=user)
-        else:
-            pass
-
-    def clear_tags(self, resource, user=None):
-        if self.is_tag_support:
-            self.tags.clear(resource, user=user)
-        else:
-            pass
 
     @property
     def is_log_support(self):
@@ -112,7 +78,7 @@ class ResourceHelper(object):
     def rel_path(self, path):
         return path[len(self.root.path):]
 
-    def instance_by_path(self, path):
+    def instance_by_path(self, path, underlying=None):
         if not path.startswith(self.root.path):
             return None
         rel_path = self.rel_path(path)
@@ -121,12 +87,12 @@ class ResourceHelper(object):
         names = rel_path.split('/')
         current = self.root
         for idx in range(0, len(names)):
-            current = Resource(parent=current, name=names[idx], helper=self)
+            current = Resource(parent=current, name=names[idx], helper=self, underlying=underlying)
         return current
 
-    def instance(self, parent=None, name=None, **kwargs):
+    def instance(self, parent=None, name=None, underlying=None, **kwargs):
         parent = self.root if parent is None else parent
-        return Resource(parent=parent, name=name, helper=self, **kwargs)
+        return Resource(parent=parent, name=name, helper=self, underlying=underlying, **kwargs)
 
     @abstractmethod
     def create(self, resource, user=None, **kwargs):
@@ -171,4 +137,16 @@ class ResourceHelper(object):
 
     @abstractmethod
     def delete(self, path, user=None, **kwargs):
+        pass
+
+    @abstractmethod
+    def read(self, resource):
+        pass
+
+    @abstractmethod
+    def write(self, resource):
+        pass
+
+    @abstractmethod
+    def append(self, resource):
         pass

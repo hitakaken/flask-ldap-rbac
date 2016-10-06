@@ -93,8 +93,8 @@ def sids_of(who):
     return results
 
 
-def default_entry(who):
-    return AccessControlEntry(sid=sid_of(who))
+def default_entry(who, oid=None):
+    return AccessControlEntry(sid=sid_of(who), oid=oid)
 
 
 class AccessControlList(object):
@@ -113,6 +113,46 @@ class AccessControlList(object):
     def exists(self, who, oid=None):
         idx, ace = self.entry(who, oid=oid)
         return idx >= 0
+
+    def allow(self, who, permission_mask, oid=None):
+        idx, ace = self.entry(who, oid=oid)
+        if idx >= 0:
+            ace.allow(permission_mask)
+            self.ace_list[idx] = ace
+        else:
+            ace = default_entry(who, oid=oid)
+            ace.allow(permission_mask)
+            self.ace_list.append(ace)
+
+    def deny(self, who, permission_mask, oid=None):
+        idx, ace = self.entry(who, oid=oid)
+        if idx >= 0:
+            ace.deny(permission_mask)
+            self.ace_list[idx] = ace
+        else:
+            ace = default_entry(who, oid=oid)
+            ace.deny(permission_mask)
+            self.ace_list.append(ace)
+
+    def manage(self, who, permission_mask, oid=None):
+        idx, ace = self.entry(who, oid=oid)
+        if idx >= 0:
+            ace.manage(permission_mask)
+            self.ace_list[idx] = ace
+        else:
+            ace = default_entry(who, oid=oid)
+            ace.manage(permission_mask)
+            self.ace_list.append(ace)
+
+    def dismiss(self, who, permission_mask, oid=None):
+        idx, ace = self.entry(who, oid=oid)
+        if idx >= 0:
+            ace.dismiss(permission_mask)
+            self.ace_list[idx] = ace
+        else:
+            ace = default_entry(who, oid=oid)
+            ace.dismiss(permission_mask)
+            self.ace_list.append(ace)
 
     def is_allowed(self, who, permission_mask, oid=None, default=False):
         sids = sids_of(who)
@@ -148,24 +188,20 @@ class AccessControlList(object):
                 mask |= permission
         return mask
 
+    @property
+    def to_list(self):
+        return map(str, self.ace_list)
+
 
 class AccessControlListHelper(object):
     __metaclass__ = ABCMeta
 
+    @property
+    def type(self):
+        return 'Base'
+
     @abstractmethod
     def load(self, resource, force=False):
-        pass
-
-    @abstractmethod
-    def add(self, resource, aces, user=None):
-        pass
-
-    @abstractmethod
-    def remove(self, resource, aces, user=None):
-        pass
-
-    @abstractmethod
-    def clear(self, resource):
         pass
 
     @abstractmethod
