@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
-from ldap_rbac import exceptions
-from ldap_rbac.core import constants
+from ldap_rbac.core import constants, exceptions
 from ldap_rbac.models import TokenUser
 import jwt
 import msgpack
@@ -50,9 +49,9 @@ class TokenHelper(object):
             return jwt.decode(jwt_token, secret, algorithms=[algorithm], leeway=leeway, **kwargs)
         except jwt.ExpiredSignatureError:
             # Signature has expired
-            raise exceptions.TokenExpired()
+            raise exceptions.TOKEN_EXPIRED
         except jwt.DecodeError:
-            raise exceptions.TokenDecodeError()
+            raise exceptions.TOKEN_DECODE_ERROR
 
     def encrypt(self, content, **kwargs):
         return msgpack.packb(content, **kwargs)

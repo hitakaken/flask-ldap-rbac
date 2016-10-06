@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import ldap
-from ldap_rbac import exceptions
-from ldap_rbac.core import constants, utils
+from ldap_rbac.core import constants, utils, exceptions
 from ldap_rbac.core.helpers import BaseHelper
 from ldap_rbac.models import User, UserRole, PWPolicy
 
@@ -27,6 +26,8 @@ class UserHelper(BaseHelper):
                 else utils.rdn(user.attrs[constants.OPENLDAP_POLICY_SUBENTRY][0])
         elif attr_name == 'roles':
             return self.get_role_names(user=user)
+        elif attr_name == 'is_admin':
+            return constants.ROLE_NAME_ADMIN in self.get_role_names(user=user)
         else:
             return super(UserHelper, self).getattr(user, attr_name)
 

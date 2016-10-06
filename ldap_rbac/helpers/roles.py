@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import ldap
-from ldap_rbac import exceptions
-from ldap_rbac.core import constants, utils
 from ldap_rbac.core.helpers import BaseHelper
 from ldap_rbac.models import Role
 
