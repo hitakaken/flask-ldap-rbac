@@ -277,13 +277,16 @@ class BaseHelper(object):
 
     def getattr(self, entry, attr_name):
         if attr_name == 'name':
-            return entry.attrs.get(entry.ID_FIELD, None)
+            return utils.get_first(entry.attrs.get(entry.ID_FIELD, None))
         class_name = self.entity_class().__name__
         if attr_name in self.ldap.config.ENTITY_CLASSES[class_name]['ALL']:
             return entry.attrs[attr_name]
         ft_attr_name = constants.FT_PREFIX + attr_name.title()
         if ft_attr_name in self.ldap.config.ENTITY_CLASSES[class_name]['ALL']:
-            return entry.attrs[ft_attr_name]
+            if attr_name == 'id':
+                return utils.get_first(entry.attrs[ft_attr_name])
+            else:
+                return entry.attrs[ft_attr_name]
         else:
             raise AttributeError
 

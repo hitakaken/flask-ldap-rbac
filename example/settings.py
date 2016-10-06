@@ -2,8 +2,8 @@
 from ldap_rbac.core import constants
 
 LDAP = {
-    'BASE_DN': 'dc=maxcrc,dc=com',
-    'ROOT_DN': 'cn=Manager,dc=maxcrc,dc=com',
+    'BASE_DN': 'dc=novbase,dc=com',
+    'ROOT_DN': 'cn=Manager,dc=novbase,dc=com',
     'ROOT_PW': 'xxzx123-456',
     'URI': 'ldap://127.0.0.1',
     'OPTIONS': {
@@ -36,3 +36,5 @@ BUILT_IN_RBAC = {
 RESTPLUS_MASK_SWAGGER = False
 RESOURCE_SOURCE_TYPE = 'tinydb'
 RESOURCE_SOURCE = 'D:/Workspace/data/yiren/db.json'
+LOGGER_TYPE = 'tinydb'
+LOGGER_SOURCE = 'D:/Workspace/data/yiren/db.json'

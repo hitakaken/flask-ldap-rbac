@@ -19,24 +19,24 @@ class TinyACLs(AccessControlListHelper):
         if resource.loaded_acls is not None and not force:
             return
         if resource.helper.is_acl_together:
-            ace_text_list = resource.underlying.get('acls', [])
+            aces = resource.underlying.get('acls', {})
         else:
             query = Query()
             result = self.db().get(query.rid == resource.rid)
-            ace_text_list = [] if result is None else result.get('acls', [])
-        resource.loaded_acls = AccessControlList(ace_text_list=ace_text_list)
+            aces = {} if result is None else result.get('acls', {})
+        resource.loaded_acls = AccessControlList(aces=aces)
 
     def save(self, resource):
         if resource.helper.is_acl_together:
-            resource.underlying['acls'] = resource.loaded_acls.to_list
+            resource.underlying['acls'] = dict(resource.loaded_acls)
         else:
             query = Query()
             if (self.db().get(query.rid == resource.rid)) is None:
                 self.db().insert({
                     'rid': resource.rid,
-                    'acls': resource.loaded_acls.to_list
+                    'acls': dict(resource.loaded_acls)
                 })
             else:
-                self.db().update({'acls': resource.loaded_acls.to_list}, query.rid == resource.rid)
+                self.db().update({'acls': dict(resource.loaded_acls)}, query.rid == resource.rid)
 
 

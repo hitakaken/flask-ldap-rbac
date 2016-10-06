@@ -2,6 +2,7 @@
 from abc import ABCMeta, abstractmethod
 from ldap_rbac.core import constants
 from ldap_rbac.models import User, Role, Group, TokenUser
+import six
 
 PERMISSIONS = [
     constants.PERMISSION_READ_MASK,
@@ -15,10 +16,9 @@ PERMISSIONS = [
 
 
 class AccessControlEntry(object):
-    def __init__(self, sid=None, oid=None,
+    def __init__(self, sid=None,
                  allow_mask=None, deny_mask=None, grant_mask=None):
         self.sid = sid
-        self.oid = oid
         self.allow_mask = allow_mask if allow_mask is not None else constants.PERMISSION_BASE_MASK
         self.deny_mask = deny_mask if deny_mask is not None else constants.PERMISSION_BASE_MASK
         self.grant_mask = grant_mask if grant_mask is not None else constants.PERMISSION_BASE_MASK
@@ -55,18 +55,16 @@ class AccessControlEntry(object):
         )
 
     def __str__(self):
-        return '%s$%s$%s' % (
+        return '%s$%s' % (
             self.sid,
-            self.oid if self.oid is not None else '',
             self.hex_mask
         )
 
 
 def entry_of(text, splitter='$'):
-    sid, oid, hex_mask = text.split(splitter)
+    sid, hex_mask = text.split(splitter)
     allow_mask, deny_mask, grant_mask = bytearray(hex_mask.decode("hex"))
-    return AccessControlEntry(sid=sid, oid=oid if len(oid) > 0 else None,
-                              allow_mask=allow_mask, deny_mask=deny_mask, grant_mask=grant_mask)
+    return AccessControlEntry(sid=sid, allow_mask=allow_mask, deny_mask=deny_mask, grant_mask=grant_mask)
 
 
 def sid_of(who):
@@ -93,72 +91,83 @@ def sids_of(who):
     return results
 
 
-def default_entry(who, oid=None):
-    return AccessControlEntry(sid=sid_of(who), oid=oid)
+def default_entry(who):
+    return AccessControlEntry(sid=sid_of(who))
 
 
 class AccessControlList(object):
-    def __init__(self, ace_list=None, ace_text_list=None):
-        if ace_text_list is not None:
-            ace_list = map(entry_of, ace_text_list)
-        self.ace_list = ace_list if ace_list is not None else []
+    def __init__(self, aces=None):
+        if aces is not None:
+            aces = {}
+        self.default = map(entry_of, aces.get('def', []))
+        self.extension = {k: map(entry_of, v) for k, v in six.iteritems(aces.get('ext', {}))}
 
     def entry(self, who, oid=None):
         sid = sid_of(who)
-        for idx, ace in enumerate(self.ace_list):
-            if ace.sid == sid and ((oid is None and ace.oid is None) or (oid == ace.oid)):
+        aces = self.default if oid is None else self.extension.get(oid, [])
+        for idx, ace in enumerate(self.aces):
+            if ace.sid == sid:
                 return idx, ace
-        return -1, None
+        return -1, None, aces
 
     def exists(self, who, oid=None):
         idx, ace = self.entry(who, oid=oid)
         return idx >= 0
 
+    def update(self, idx, ace, oid=None):
+        if oid is None:
+            if idx < 0:
+                self.default.append(ace)
+            else:
+                self.default[idx] = ace
+        else:
+            if oid not in self.extension:
+                self.extension[oid] = []
+            if idx < 0:
+                self.extension[oid].append(ace)
+            else:
+                self.extension[oid][idx] = ace
+
+    def remove(self, idx, oid=None):
+        if oid is None:
+            del self.default[idx]
+        else:
+            del self.extension[oid][idx]
+
     def allow(self, who, permission_mask, oid=None):
         idx, ace = self.entry(who, oid=oid)
-        if idx >= 0:
-            ace.allow(permission_mask)
-            self.ace_list[idx] = ace
-        else:
-            ace = default_entry(who, oid=oid)
-            ace.allow(permission_mask)
-            self.ace_list.append(ace)
+        if idx < 0:
+            ace = default_entry(who)
+        ace.allow(permission_mask)
+        self.update(idx, ace, oid=oid)
 
     def deny(self, who, permission_mask, oid=None):
         idx, ace = self.entry(who, oid=oid)
-        if idx >= 0:
-            ace.deny(permission_mask)
-            self.ace_list[idx] = ace
-        else:
-            ace = default_entry(who, oid=oid)
-            ace.deny(permission_mask)
-            self.ace_list.append(ace)
+        if idx < 0:
+            ace = default_entry(who)
+        ace.deny(permission_mask)
+        self.update(idx, ace, oid=oid)
 
     def manage(self, who, permission_mask, oid=None):
         idx, ace = self.entry(who, oid=oid)
-        if idx >= 0:
-            ace.manage(permission_mask)
-            self.ace_list[idx] = ace
-        else:
-            ace = default_entry(who, oid=oid)
-            ace.manage(permission_mask)
-            self.ace_list.append(ace)
+        if idx < 0:
+            ace = default_entry(who)
+        ace.manage(permission_mask)
+        self.update(idx, ace, oid=oid)
 
     def dismiss(self, who, permission_mask, oid=None):
         idx, ace = self.entry(who, oid=oid)
-        if idx >= 0:
-            ace.dismiss(permission_mask)
-            self.ace_list[idx] = ace
-        else:
-            ace = default_entry(who, oid=oid)
-            ace.dismiss(permission_mask)
-            self.ace_list.append(ace)
+        if idx < 0:
+            ace = default_entry(who)
+        ace.dismiss(permission_mask)
+        self.update(idx, ace, oid=oid)
 
     def is_allowed(self, who, permission_mask, oid=None, default=False):
         sids = sids_of(who)
-        for ace in self.ace_list:
+        aces = self.default if oid is None else self.extension.get(oid, [])
+        for ace in aces:
             for sid in sids:
-                if ace.sid == sid and ((oid is None and ace.oid is None) or (oid == ace.oid)):
+                if ace.sid == sid:
                     if ace.is_allowed(permission_mask):
                         return True
                     if ace.is_denied(permission_mask):
@@ -167,9 +176,10 @@ class AccessControlList(object):
 
     def is_manager(self, who, permission_mask, oid=None):
         sids = sids_of(who)
-        for ace in self.ace_list:
+        aces = self.default if oid is None else self.extension.get(oid, [])
+        for ace in aces:
             for sid in sids:
-                if ace.sid == sid and ((oid is None and ace.oid is None) or (oid == ace.oid)):
+                if ace.sid == sid:
                     if ace.is_manager(permission_mask):
                         return True
         return False
@@ -189,8 +199,11 @@ class AccessControlList(object):
         return mask
 
     @property
-    def to_list(self):
-        return map(str, self.ace_list)
+    def __dict__(self):
+        return {
+            'def': map(str, self.default),
+            'ext': {k: map(str, v) for k, v in six.iteritems(self.extension)}
+        }
 
 
 class AccessControlListHelper(object):

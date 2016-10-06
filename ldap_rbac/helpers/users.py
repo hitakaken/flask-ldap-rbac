@@ -51,7 +51,13 @@ class UserHelper(BaseHelper):
             super(UserHelper, self).setattr(user, key, value)
 
     def load(self, user):
-        return user
+        results = self.find_all({'sn': user})
+        if len(results) == 1:
+            return results[0]
+        elif len(results) == 0:
+            raise exceptions.USER_NOT_FOUND
+        else:
+            raise exceptions.USER_SEARCH_FAILED
 
     def lock(self, user):
         user.locked = True
@@ -96,7 +102,7 @@ class UserHelper(BaseHelper):
         user = self.load(user)
         if check and 'userpassword' in user.attrs:
             if oldpw is None or not self.check_password(user, oldpw):
-                raise exceptions.InvalidCredentials()
+                raise exceptions.USER_PW_INVLD
         if not check or 'userpassword' not in user.attrs:
             oldpw = None
         self.ldap.conn.passwd_s(user.dn, oldpw, newpw)
@@ -128,7 +134,7 @@ class UserHelper(BaseHelper):
     def authenticate(self, username, password):
         user = self.load(username)
         if user is None:
-            raise exceptions.UserNotFound()
+            raise exceptions.USER_NOT_FOUND
         if not self.check_password(user, password):
-            raise exceptions.InvalidCredentials()
+            raise exceptions.USER_PW_INVLD
         return user

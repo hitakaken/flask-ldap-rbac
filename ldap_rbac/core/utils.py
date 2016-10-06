@@ -153,3 +153,12 @@ def to_timestamp(utc_time):
 
 def to_datetime(ts):
     return dt.datetime.fromtimestamp(ts)
+
+
+def get_first(array, default=None):
+    if array is not None and len(array) > 0:
+        return array[0]
+    return default
+
+
+

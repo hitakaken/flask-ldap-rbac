@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81
+from ldap_rbac.patched import Namespace, fields
 from werkzeug.exceptions import BadRequest, ClientDisconnected, SecurityError, BadHost, \
     Unauthorized, Forbidden, NotFound, MethodNotAllowed, NotAcceptable, RequestTimeout, \
     Conflict, Gone, LengthRequired, InternalServerError
@@ -490,3 +491,34 @@ GROUP_PROTOCOL_INVLD = security_error(10313)
 # 20000's - Token Error
 TOKEN_DECODE_ERROR = security_error(20001, msg="Token decode failed")
 TOKEN_EXPIRED = security_error(20002, msg="Token is expired")
+
+# Rest API Schema
+api = Namespace('Error', description='错误')
+fuse_error_schema = api.model('FuseError', {
+    'errno': fields.Integer(description='错误码', required=True),
+    'message': fields.String(description='错误信息')
+})
+
+security_exception_schema = api.model('SecurityException', {
+    'eid': fields.Integer(description='错误码', required=True),
+    'message': fields.String(description='错误信息')
+})
+
+
+@api.errorhandler(FuseError)
+@api.marshal_with(fuse_error_schema, code=500)
+def handle_fuse_error(error):
+    res = {'errno': error.errno}
+    if error.msg is not None:
+        res['message'] = error.msg
+    return res, error.http_exception.code
+
+
+@api.errorhandler(SecurityException)
+@api.marshal_with(security_exception_schema, code=400)
+def handle_security_exception(error):
+    res = {'eid': error.eid}
+    if error.msg is not None:
+        res['message'] = error.msg
+    return res, error.http_exception.code
+

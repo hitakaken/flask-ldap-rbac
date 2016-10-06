@@ -13,7 +13,7 @@ class ResourceHelper(object):
             root = Resource(name='', rid='ROOT',
                             owner=constants.SECURITY_IDENTITY_ROLE_PREFIX + constants.ROLE_NAME_ADMIN,
                             group=constants.SECURITY_IDENTITY_ROLE_PREFIX + constants.ROLE_NAME_LOGIN_USER,
-                            mode=0b111100000, children=[], ctime=0, mtime=0, atime=0, links=[], blocks=[],
+                            mode=0o740, children=[], ctime=0, mtime=0, atime=0, links=[], blocks=[],
                             helper=self)
         self.root = root
         self.root.loaded = True

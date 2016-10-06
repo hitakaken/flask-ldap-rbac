@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 from ldap_rbac.core import constants, exceptions
-from ldap_rbac.models import TokenUser
+from ldap_rbac.models import TokenUser, User
 import jwt
 import msgpack
 
@@ -60,19 +60,38 @@ class TokenHelper(object):
         return msgpack.unpackb(encrypted, **kwargs)
 
     def load_user_from_request(self, request):
-        payload = self.decode(request.headers.get(self.token_header))
-        info = self.decrypt(payload.get('info'))
-        return TokenUser(name=payload.get('name'), uid=info.get('id'), roles=info.get('roles'), helper=self)
+        if self.token_header not in request.headers:
+            return None
+        try:
+            return self.load_user_from_token(request.headers.get(self.token_header))
+        except exceptions.TOKEN_EXPIRED:
+            return None
+        except exceptions.TOKEN_DECODE_ERROR:
+            return None
+
+    def load_user_from_token(self, token):
+        payload = self.decode(token)
+        info = payload.get('info')
+        return TokenUser(
+            name=payload.get('name'),
+            uid=info.get('id'),
+            alias=info.get('alias', []),
+            roles=info.get('roles', []),
+            helper=self)
 
     def token_user(self, user):
-        return TokenUser(name=user.name, uid=user.id, roles=user.roles, helper=self)
+        return TokenUser(name=user.name, uid=user.id, alias=user.sn, roles=user.roles, helper=self)
 
     def token(self, user):
-        user = self.token_user(user)
-        return self.decode({
+        if user is None:
+            raise exceptions.USER_NOT_FOUND
+        if isinstance(user, User):
+            user = self.token_user(user)
+        return self.encode({
             'name': user.name,
-            'info': self.encrypt({
+            'info': {
                 'id': user.id,
+                'alias': user.alias,
                 'roles': user.roles
-            })
+            }
         })
