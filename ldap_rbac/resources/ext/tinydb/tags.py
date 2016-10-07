@@ -12,7 +12,8 @@ class TinyTags(TagsHelper):
     def type(self):
         return 'TinyDB'
 
-    def db(self):
+    @property
+    def database(self):
         return self.table if self.table is not None else self.db
 
     def load(self, resource, force=False):
@@ -22,19 +23,20 @@ class TinyTags(TagsHelper):
             tags = resource.underlying.get('tags', {})
         else:
             query = Query()
-            result = self.db().get(query.rid == resource.rid)
+            result = self.database.get(query.rid == resource.rid)
             tags = {} if result is None else result.get('tags', {})
         resource.loaded_tags = Tags(resource, tags=tags)
 
     def save(self, resource):
         if resource.helper.is_tag_together:
-            resource.underlying['tags'] = resource.loaded_tags.tags
+            resource.changes.append('tags')
+            resource.underlying['tags'] = resource.tags.as_dict()
         else:
             query = Query()
-            if (self.db().get(query.rid == resource.rid)) is None:
-                self.db().insert({
+            if (self.database.get(query.rid == resource.rid)) is None:
+                self.database.insert({
                     'rid': resource.rid,
                     'tags': resource.loaded_tags.tags
                 })
             else:
-                self.db().update({'tags': resource.loaded_tags.tags}, query.rid == resource.rid)
+                self.database.update({'tags': resource.loaded_tags.tags}, query.rid == resource.rid)

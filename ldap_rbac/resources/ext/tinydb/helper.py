@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import json
+
 from tinydb import Query
 from acls import TinyACLs
 from tags import TinyTags
 from logger import TinyLogger
 from ldap_rbac.resources.helpers import ResourceHelper
 
-inode_attrs = ['rid', 'owner', 'group', 'mode', 'type', 'ctime', 'mtime', 'atime', ' links', 'blocks']
+inode_attrs = ['rid', 'owner', 'group', 'mode', 'type', 'ctime', 'mtime', 'atime', 'links', 'blocks']
 
 
 class TinyResources(ResourceHelper):
@@ -35,7 +37,7 @@ class TinyResources(ResourceHelper):
         def check_access(aces):
             for ace in aces['def']:
                 for sid in sids:
-                    if ace.startswith(sid + '$'):
+                    if ace.startswith(sid + '$') and not ace.startswith(sid + '$00'):
                         return True
             return False
 
@@ -46,20 +48,25 @@ class TinyResources(ResourceHelper):
         pass
 
     def create(self, resource, user=None, **kwargs):
-        if not resource.root.loaded:
-            resource.root = self.find_by_path(resource.root.path)
+        if not resource.parent.loaded:
+            resource.parent = self.find_by_path(resource.parent.path)
         resource.fill(user=user)
         entry = {}
         for attr in inode_attrs:
             entry[attr] = getattr(resource, attr)
-        if 'data' in resource.underlying:
+        if resource.underlying is not None and 'data' in resource.underlying:
             entry['data'] = resource.underlying['data']
+        elif resource.is_embed and resource.content is not None:
+            entry['data'] = resource.content
+        if resource.underlying is None:
+            resource.underlying = {}
         if self.is_acl_together:
             self.acls.save(resource)
-            entry['acls'] = resource.underlying['acls']
+            entry['acls'] = resource.underlying.get('acls', {'def': [], 'ext': {}})
         if self.is_tag_together:
             self.tags.save(resource)
-            entry['tags'] = resource.underlying['tags']
+            entry['tags'] = resource.underlying.get('tags', {})
+        entry['path'] = resource.helper.rel_path(resource.path)
         self.db.insert(entry)
 
     def load(self, resource, result):
@@ -74,9 +81,9 @@ class TinyResources(ResourceHelper):
         elif resource.loaded_xattrs != result.get('xattrs'):
             changes.append('xattrs')
         if self.is_acl_together:
-            self.acls.load(self)
-        if self.is_tag_together():
-            self.tags.load(self)
+            self.acls.load(resource)
+        if self.is_tag_together:
+            self.tags.load(resource)
         resource.loaded = True
         return resource, changes
 
@@ -119,7 +126,15 @@ class TinyResources(ResourceHelper):
         pass
 
     def update(self, resource, user=None, **kwargs):
-        pass
+        update = {}
+        for change in resource.changes:
+            if change in inode_attrs:
+                update[change] = getattr(resource, change)
+            else:
+                update[change] = resource.underlying[change]
+        query = Query()
+        self.db.update(update, query.rid == resource.rid)
+        resource.changes = []
 
     def delete(self, path, user=None, **kwargs):
         pass

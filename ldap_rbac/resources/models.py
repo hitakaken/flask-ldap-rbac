@@ -17,7 +17,7 @@ def timestamp_now():
 
 
 def is_admin(user):
-    return user is not None and (isinstance(user, User) or isinstance(user, TokenUser)) and user.is_admin
+    return user is not None and hasattr(user, 'is_admin') and user.is_admin
 
 
 class Resource(object):
@@ -54,7 +54,7 @@ class Resource(object):
         if self.rid is None:
             self.rid = utils.uuid()
         if self.owner is None:
-            self.set_owner(user)
+            self.set_owner(user=user)
         if self.group is None:
             if user.group is not None:
                 self.group = constants.SECURITY_IDENTITY_GROUP_PREFIX + user.group
@@ -65,7 +65,7 @@ class Resource(object):
         if self.type is None:
             self.type = RESOURCE_TYPE_EMBED
         if self.content is None:
-            if self.is_embed():
+            if self.is_embed:
                 self.content = {}
         ts = timestamp_now()
         if self.ctime is None:
@@ -81,8 +81,8 @@ class Resource(object):
 
     @property
     def path(self):
-        return '%s/%s' % (
-            '' if self.parent is None else self.parent.path,
+        return '' if self.parent is None else '%s/%s' % (
+            self.parent.path,
             self.name
         )
 
@@ -151,22 +151,18 @@ class Resource(object):
         return False
 
     def grant_read(self, user=None, manager=None):
-        if not self.can_manage_read(manager):
+        if not self.can_manage_read(user=manager):
             raise exceptions.EPERM
-        if not self.can_read(user):
+        if not self.can_read(user=user):
             if self.has_owner(user=user):
                 self.mode |= 0o400
             elif self.has_group(group=user):
                 self.mode |= 0o040
             elif self.acls is not None:
                 self.acls.allow(user, constants.PERMISSION_READ_MASK)
-            else:
-                raise exceptions.EPERM
-        else:
-            raise exceptions.EPERM
 
     def revoke_read(self, user=None, manager=None):
-        if not self.can_manage_read(manager):
+        if not self.can_manage_read(user=manager):
             raise exceptions.EPERM
         if self.can_read(user) and (not self.can_manage_read(user) or (is_admin(manager) or self.has_owner(manager))):
             if self.has_owner(user=user):
@@ -180,18 +176,18 @@ class Resource(object):
         else:
             raise exceptions.EPERM
 
-    def grant_manage_read(self, user=None, manager=None):
-        if (is_admin(manager) or self.has_owner(user=manager)) \
-                and not (is_admin(user) or self.has_owner(user=user)) \
-                and self.acls is not None:
+    def grant_manage_read(self, user=None, manager=None, ignore=False):
+        if ((is_admin(manager) or self.has_owner(user=manager))
+                and not (is_admin(user) or self.has_owner(user=user))
+                and self.acls is not None) or (ignore and self.can_manage_read(user=manager)):
             self.acls.manage(user, constants.PERMISSION_READ_MASK)
         else:
             raise exceptions.EPERM
 
-    def revoke_manage_read(self, user=None, manager=None):
-        if (is_admin(manager) or self.has_owner(user=manager)) \
-                and not (is_admin(user) or self.has_owner(user=user)) \
-                and self.acls is not None:
+    def revoke_manage_read(self, user=None, manager=None, ignore=False):
+        if ((is_admin(manager) or self.has_owner(user=manager))
+                and not (is_admin(user) or self.has_owner(user=user))
+                and self.acls is not None) or (ignore and self.can_manage_read(user=manager)):
             self.acls.dismiss(user, constants.PERMISSION_READ_MASK)
         else:
             raise exceptions.EPERM
@@ -205,7 +201,7 @@ class Resource(object):
             return True
         if self.acls is not None:
             return self.acls.is_allowed(
-                user, constants.PERMISSION_READ_MASK,
+                user, constants.PERMISSION_WRITE_MASK,
                 default=self.mode & 0o002 > 0)
         return self.mode & 0o002 > 0
 
@@ -217,24 +213,20 @@ class Resource(object):
         return False
 
     def grant_write(self, user=None, manager=None):
-        if not self.can_manage_write(manager):
+        if not self.can_manage_write(user=manager):
             raise exceptions.EPERM
-        if not self.can_write(user):
+        if not self.can_write(user=user):
             if self.has_owner(user=user):
                 self.mode |= 0o200
             elif self.has_group(group=user):
                 self.mode |= 0o020
             elif self.acls is not None:
                 self.acls.allow(user, constants.PERMISSION_WRITE_MASK)
-            else:
-                raise exceptions.EPERM
-        else:
-            raise exceptions.EPERM
 
     def revoke_write(self, user=None, manager=None):
-        if not self.can_manage_write(manager):
+        if not self.can_manage_write(user=manager):
             raise exceptions.EPERM
-        if self.can_write(user) and (not self.can_manage_read(user) or (is_admin(manager) or self.has_owner(manager))):
+        if self.can_write(user) and (not self.can_manage_write(user) or (is_admin(manager) or self.has_owner(manager))):
             if self.has_owner(user=user):
                 self.mode &= ~0o200
             elif self.has_group(group=user):
@@ -280,7 +272,7 @@ class Resource(object):
         return False
 
     def grant_tags(self, user=None, manager=None):
-        if not self.can_manage_read(manager):
+        if not self.can_manage_tags(user=manager):
             raise exceptions.EPERM
         if self.acls is None:
             self.grant_read(user=user, manager=manager)
@@ -293,7 +285,7 @@ class Resource(object):
                 self.acls.allow(user, constants.PERMISSION_TAGS_MASK)
 
     def revoke_tags(self, user=None, manager=None):
-        if not self.can_manage_tags(manager):
+        if not self.can_manage_tags(user=manager):
             raise exceptions.EPERM
         if self.can_tags(user) and (not self.can_manage_tags(user) or (is_admin(manager) or self.has_owner(manager))):
             if self.has_owner(user=user):
@@ -303,16 +295,20 @@ class Resource(object):
             elif self.acls is not None:
                 self.acls.deny(user, constants.PERMISSION_TAGS_MASK)
 
-    def grant_manage_tags(self, user=None, manager=None):
-        if is_admin(manager) or self.has_owner(user=manager) \
-                and self.acls is not None:
+    def grant_manage_tags(self, user=None, manager=None, ignore=False):
+        if (is_admin(manager) or self.has_owner(user=manager)
+                and self.acls is not None) or (ignore and self.can_manage_tags(user=manager)):
             self.acls.manage(user, constants.PERMISSION_TAGS_MASK)
+        else:
+            raise exceptions.EPERM
 
-    def revoke_manage_tags(self, user=None, manager=None):
-        if is_admin(manager) or self.has_owner(user=manager) \
-                and not (is_admin(user) or self.has_owner(user=user)) \
-                and self.acls is not None:
+    def revoke_manage_tags(self, user=None, manager=None, ignore=False):
+        if (is_admin(manager) or self.has_owner(user=manager)
+                and not (is_admin(user) or self.has_owner(user=user))
+                and self.acls is not None) or (ignore and self.can_manage_tags(user=manager)):
             self.acls.dismiss(user, constants.PERMISSION_TAGS_MASK)
+        else:
+            raise exceptions.EPERM
 
     def read(self, user=None):
         if not self.can_read(user):
@@ -347,5 +343,5 @@ class Resource(object):
     @property
     def tags(self, force=False):
         if (self.loaded_tags is None or force) and self.helper is not None and self.helper.is_tag_support:
-            self.loaded_tags = self.helper.load_tags(self)
+            self.helper.load_tags(self)
         return self.loaded_tags

@@ -47,7 +47,7 @@ class RBACManager(object):
         connection.initialize()
         # 令牌池
         self.tokens = TokenHelper(jwt_config=app.config.get('JWT', {}), token_config=app.config.get('TOKEN'))
-        self.login_manager = LoginManager()
+        self.login_manager = LoginManager(app=app)
         self.login_manager.request_loader(self.tokens.load_user_from_request)
         # 注册异常
         api.add_namespace(exceptions.api)
@@ -71,4 +71,4 @@ class RBACManager(object):
         app.register_blueprint(api_blueprint, **kwargs)
         self.api = api
         setattr(app, 'rbac', self)
-        setattr(app, 'login_manager', self.login_manager)
+        setattr(app, 'rest', api)

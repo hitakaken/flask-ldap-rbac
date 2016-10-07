@@ -8,11 +8,16 @@ class TinyLogger(ResourceLogger):
         self.db = db
         self.table = table
 
-    def db(self):
+    @property
+    def type(self):
+        return 'TinyDB'
+
+    @property
+    def database(self):
         return self.table if self.table is not None else self.db
 
     def log(self, resource, event=None, user=None, **kwargs):
-        self.db().insert({
+        self.database.insert({
             'uuid': utils.uuid(),
             'rid': resource.rid,
             'uid': user.id,

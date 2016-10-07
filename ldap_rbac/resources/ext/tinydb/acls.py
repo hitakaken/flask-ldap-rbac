@@ -12,7 +12,8 @@ class TinyACLs(AccessControlListHelper):
     def type(self):
         return 'TinyDB'
 
-    def db(self):
+    @property
+    def database(self):
         return self.table if self.table is not None else self.db
 
     def load(self, resource, force=False):
@@ -22,21 +23,22 @@ class TinyACLs(AccessControlListHelper):
             aces = resource.underlying.get('acls', {})
         else:
             query = Query()
-            result = self.db().get(query.rid == resource.rid)
+            result = self.database.get(query.rid == resource.rid)
             aces = {} if result is None else result.get('acls', {})
         resource.loaded_acls = AccessControlList(aces=aces)
 
     def save(self, resource):
         if resource.helper.is_acl_together:
-            resource.underlying['acls'] = dict(resource.loaded_acls)
+            resource.changes.append('acls')
+            resource.underlying['acls'] = resource.acls.as_dict()
         else:
             query = Query()
-            if (self.db().get(query.rid == resource.rid)) is None:
-                self.db().insert({
+            if (self.database.get(query.rid == resource.rid)) is None:
+                self.database.insert({
                     'rid': resource.rid,
                     'acls': dict(resource.loaded_acls)
                 })
             else:
-                self.db().update({'acls': dict(resource.loaded_acls)}, query.rid == resource.rid)
+                self.database.update({'acls': dict(resource.loaded_acls)}, query.rid == resource.rid)
 
 

@@ -48,6 +48,9 @@ class Tags(object):
         if tag in self.tags and len(self.tags[tag]) == 0:
             self.tags.pop(tag, None)
 
+    def as_dict(self):
+        return self.tags
+
 
 class TagsHelper(object):
     __metaclass__ = ABCMeta

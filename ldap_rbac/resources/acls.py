@@ -76,6 +76,8 @@ def sid_of(who):
         return constants.SECURITY_IDENTITY_GROUP_PREFIX + who.cn
     if isinstance(who, TokenUser):
         return constants.SECURITY_IDENTITY_USER_PREFIX + who.id
+    if hasattr(who, 'id'):
+        return constants.SECURITY_IDENTITY_USER_PREFIX + who.id
     return None
 
 
@@ -84,9 +86,11 @@ def sids_of(who):
     if sid is None:
         return []
     results = [sid]
-    if isinstance(who, TokenUser):
+    if hasattr(who, 'alias'):
         results += map(lambda name: constants.SECURITY_IDENTITY_USER_PREFIX + name, who.alias)
+    if hasattr(who, 'roles'):
         results += map(lambda name: constants.SECURITY_IDENTITY_ROLE_PREFIX + name, who.roles)
+    if hasattr(who, 'groups'):
         results += map(lambda name: constants.SECURITY_IDENTITY_GROUP_PREFIX + name, who.groups)
     return results
 
@@ -97,7 +101,7 @@ def default_entry(who):
 
 class AccessControlList(object):
     def __init__(self, aces=None):
-        if aces is not None:
+        if aces is None:
             aces = {}
         self.default = map(entry_of, aces.get('def', []))
         self.extension = {k: map(entry_of, v) for k, v in six.iteritems(aces.get('ext', {}))}
@@ -105,10 +109,10 @@ class AccessControlList(object):
     def entry(self, who, oid=None):
         sid = sid_of(who)
         aces = self.default if oid is None else self.extension.get(oid, [])
-        for idx, ace in enumerate(self.aces):
+        for idx, ace in enumerate(aces):
             if ace.sid == sid:
                 return idx, ace
-        return -1, None, aces
+        return -1, None
 
     def exists(self, who, oid=None):
         idx, ace = self.entry(who, oid=oid)
@@ -198,8 +202,7 @@ class AccessControlList(object):
                 mask |= permission
         return mask
 
-    @property
-    def __dict__(self):
+    def as_dict(self):
         return {
             'def': map(str, self.default),
             'ext': {k: map(str, v) for k, v in six.iteritems(self.extension)}

@@ -14,9 +14,8 @@ roles = RoleHelper(connection, name='roles')
 connection.initialize()
 
 kcao = users.instance(attrs={
-    'uid': 'kcao',
-    'sn': ['kcao', 'kcao@libnet.sh.cn', '13651649647', 'wx1341234'],
-    'mail': ['kcao@libnet.sh.cn', 'hitakaken@gmail.com']
+    'uid': 'longli',
+    'sn': ['longli']
 })
 
 users.save(kcao)
@@ -26,7 +25,7 @@ admin = roles.save(admin)
 login_user = roles.instance(dn=constants.ROLE_NAME_LOGIN_USER)
 login_user = roles.save(login_user)
 
-users.change_password(kcao, None, 'kenshin77')
+users.change_password('longli', None, 'longli')
 
 users.assign(UserRole(user=kcao, role=admin))
 users.assign(UserRole(user=kcao, role=login_user))
