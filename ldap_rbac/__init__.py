@@ -51,6 +51,9 @@ class RBACManager(object):
         self.login_manager.request_loader(self.tokens.load_user_from_request)
         # 注册异常
         api.add_namespace(exceptions.api)
+        api.authorizations = {'apiKey': {
+            'type': 'apiKey', 'in': 'header', 'name': self.tokens.token_header}
+        }
         # 注册模型
         # api.add_namespace(context.namespace)
         # 注册管理模块
@@ -68,3 +71,4 @@ class RBACManager(object):
         app.register_blueprint(api_blueprint, **kwargs)
         self.api = api
         setattr(app, 'rbac', self)
+        setattr(app, 'login_manager', self.login_manager)

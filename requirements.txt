@@ -4,6 +4,7 @@ python-ldap
 PyJWT
 flask-login
 flask-restplus
+Flask-Cors
 apispec
 webargs
 flask-marshmallow

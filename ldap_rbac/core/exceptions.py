@@ -506,7 +506,7 @@ security_exception_schema = api.model('SecurityException', {
 
 
 @api.errorhandler(FuseError)
-@api.marshal_with(fuse_error_schema, code=500)
+@api.marshal_with(fuse_error_schema, code=500, description='Fuse Error')
 def handle_fuse_error(error):
     res = {'errno': error.errno}
     if error.msg is not None:
@@ -515,7 +515,7 @@ def handle_fuse_error(error):
 
 
 @api.errorhandler(SecurityException)
-@api.marshal_with(security_exception_schema, code=400)
+@api.marshal_with(security_exception_schema, code=400, description='Security Exception')
 def handle_security_exception(error):
     res = {'eid': error.eid}
     if error.msg is not None:

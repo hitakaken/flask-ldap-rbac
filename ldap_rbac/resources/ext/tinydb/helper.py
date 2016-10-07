@@ -5,6 +5,8 @@ from tags import TinyTags
 from logger import TinyLogger
 from ldap_rbac.resources.helpers import ResourceHelper
 
+inode_attrs = ['rid', 'owner', 'group', 'mode', 'type', 'ctime', 'mtime', 'atime', ' links', 'blocks']
+
 
 class TinyResources(ResourceHelper):
     def __init__(self, root=None, acls=None, tags=None, logger=None,
@@ -31,9 +33,9 @@ class TinyResources(ResourceHelper):
         query = Query()
 
         def check_access(aces):
-            for ace in aces:
+            for ace in aces['def']:
                 for sid in sids:
-                    if ace.startswith(sid):
+                    if ace.startswith(sid + '$'):
                         return True
             return False
 
@@ -47,53 +49,26 @@ class TinyResources(ResourceHelper):
         if not resource.root.loaded:
             resource.root = self.find_by_path(resource.root.path)
         resource.fill(user=user)
+        entry = {}
+        for attr in inode_attrs:
+            entry[attr] = getattr(resource, attr)
+        if 'data' in resource.underlying:
+            entry['data'] = resource.underlying['data']
+        if self.is_acl_together:
+            self.acls.save(resource)
+            entry['acls'] = resource.underlying['acls']
+        if self.is_tag_together:
+            self.tags.save(resource)
+            entry['tags'] = resource.underlying['tags']
+        self.db.insert(entry)
 
     def load(self, resource, result):
         changes = []
-        if resource.rid is None:
-            resource.rid = result.get('rid')
-        elif resource.rid != result.get('rid'):
-            changes.append('rid')
-        if resource.owner is None:
-            resource.owner = result.get('owner')
-        elif resource.owner != result.get('owner'):
-            changes.append('owner')
-        if resource.group is None:
-            resource.group = result.get('group')
-        elif resource.group != result.get('group'):
-            changes.append('group')
-        # if resource.rid is None:
-        #    resource.children = result.get('children')
-        # elif resource.rid != result.get('rid'):
-        #    changes.append('rid')
-        if resource.mode is None:
-            resource.mode = result.get('mode')
-        elif resource.mode != result.get('mode'):
-            changes.append('mode')
-        if resource.type is None:
-            resource.type = result.get('type')
-        elif resource.type != result.get('type'):
-            changes.append('type')
-        if resource.ctime is None:
-            resource.ctime = result.get('ctime')
-        elif resource.ctime != result.get('ctime'):
-            changes.append('ctime')
-        if resource.mtime is None:
-            resource.mtime = result.get('mtime')
-        elif resource.mtime != result.get('mtime'):
-            changes.append('mtime')
-        if resource.atime is None:
-            resource.atime = result.get('atime')
-        elif resource.atime != result.get('atime'):
-            changes.append('atime')
-        if resource.links is None:
-            resource.links = result.get('links')
-        elif resource.links != result.get('links'):
-            changes.append('links')
-        if resource.blocks is None:
-            resource.blocks = result.get('blocks')
-        elif resource.blocks != result.get('blocks'):
-            changes.append('blocks')
+        for attr in inode_attrs:
+            if getattr(resource, attr) is None:
+                setattr(resource, attr, result.get(attr))
+            elif getattr(resource, attr) != result.get(attr):
+                changes.append(attr)
         if resource.loaded_xattrs is None:
             resource.loaded_xattrs = result.get('xattrs', {})
         elif resource.loaded_xattrs != result.get('xattrs'):

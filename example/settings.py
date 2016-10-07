@@ -33,8 +33,9 @@ BUILT_IN_RBAC = {
         {'name': constants.ROLE_NAME_LOGIN_USER}
     ]
 }
+RESTPLUS_HOST = "127.0.0.1:5000"
 RESTPLUS_MASK_SWAGGER = False
 RESOURCE_SOURCE_TYPE = 'tinydb'
-RESOURCE_SOURCE = 'D:/Workspace/data/yiren/db.json'
+RESOURCE_SOURCE = 'D:/Workspace/data/yiren/bills.json'
 LOGGER_TYPE = 'tinydb'
-LOGGER_SOURCE = 'D:/Workspace/data/yiren/db.json'
+LOGGER_SOURCE = 'D:/Workspace/data/yiren/logs.json'

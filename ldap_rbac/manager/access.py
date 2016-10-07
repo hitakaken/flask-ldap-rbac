@@ -13,8 +13,8 @@ api = Namespace('access',
                 )
 
 credential_request = reqparse.RequestParser()
-credential_request.add_argument('username', location='form')
-credential_request.add_argument('password', location='form')
+credential_request.add_argument('username', required=True, location='form')
+credential_request.add_argument('password', required=True, location='form')
 token_response = api.model('Token', {
     'token': fields.String
 })
@@ -29,8 +29,7 @@ class Authenticate(Resource):
         """
         Authenticate
 
-
-        :raises SecurityException: Authenticate Failed
+        :raises SecurityException:  Authenticate Failed
         """
 
         global credential_request
@@ -52,7 +51,6 @@ class CheckToken(Resource):
         """
         Check Token
 
-
         :raises SecurityException: Check Token Failed
         """
 
@@ -70,7 +68,6 @@ class RefreshToken(Resource):
     def post(self):
         """
         Refresh Token
-
 
         :raises SecurityException: Refresh Token Failed
         """
