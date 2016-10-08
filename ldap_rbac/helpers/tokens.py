@@ -60,14 +60,16 @@ class TokenHelper(object):
         return msgpack.unpackb(encrypted, **kwargs)
 
     def load_user_from_request(self, request):
-        if self.token_header not in request.headers:
-            return None
         try:
-            return self.load_user_from_token(request.headers.get(self.token_header))
+            if self.token_header in request.headers:
+                return self.load_user_from_token(request.headers.get(self.token_header))
+            if self.token_header in request.cookies:
+                return self.load_user_from_token(request.cookies.get(self.token_header))
         except exceptions.TOKEN_EXPIRED:
             return None
         except exceptions.TOKEN_DECODE_ERROR:
             return None
+        return None
 
     def load_user_from_token(self, token):
         payload = self.decode(token)
