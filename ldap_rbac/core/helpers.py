@@ -377,7 +377,6 @@ class BaseHelper(object):
         else:
             return self.update(entry)
 
-
     def delete(self, entry_id):
         # TODO
         pass
