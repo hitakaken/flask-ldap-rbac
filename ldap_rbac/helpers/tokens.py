@@ -27,7 +27,7 @@ class TokenHelper(object):
         self.jwt_algorithm = get_callback_function(jwt_config.get('algorithm', constants.JWT_ALGORITHM))
         self.jwt_expired = get_callback_function(jwt_config.get('expired', constants.JWT_EXPIRED_TIMEDELTA))
         self.jwt_leeway = get_callback_function(jwt_config.get('leeway', constants.JWT_LEEWAY))
-        self.token_header = token_config.get('HEADER', 'AUTH')
+        self.token_header = token_config.get('HEADER', 'AuthToken')
 
     def encode(self, payload, **kwargs):
         """生成JWT令牌"""
@@ -87,6 +87,8 @@ class TokenHelper(object):
     def token(self, user):
         if user is None:
             raise exceptions.USER_NOT_FOUND
+        if isinstance(user, str):
+            return user
         if isinstance(user, User):
             user = self.token_user(user)
         return self.encode({
@@ -97,3 +99,7 @@ class TokenHelper(object):
                 'roles': user.roles
             }
         })
+
+    def set_cookie(self, response, user):
+        response.set_cookie(self.token_header, value=self.token(user))
+        return response

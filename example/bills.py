@@ -13,7 +13,7 @@ api = Namespace('bill',
                 )
 
 auth_key = api.parser()
-auth_key.add_argument('AUTH', location='headers')
+auth_key.add_argument('AuthToken', location='headers')
 
 bill_issue = api.model('BillIssue', {
         'date': fields.Date(description='还贷日期', required=True),

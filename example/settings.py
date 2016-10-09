@@ -15,7 +15,7 @@ LDAP = {
     'TRACE_LEVEL': 1
 }
 TOKEN = {
-    'HEADER': 'AUTH',
+    'HEADER': 'AuthToken',
     'SECRET': 'core',
     'EXPIRED': 5000
 }
