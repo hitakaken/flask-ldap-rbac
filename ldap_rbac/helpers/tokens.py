@@ -100,7 +100,7 @@ class TokenHelper(object):
             }
         })
 
-    def set_cookie(self, response, user=None):
+    def cookie(self, response, user=None):
         if user is not None:
             response.set_cookie(self.token_header, value=self.token(user))
         else:
