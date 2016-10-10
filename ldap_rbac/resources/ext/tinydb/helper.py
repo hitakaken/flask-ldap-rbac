@@ -31,8 +31,11 @@ class TinyResources(ResourceHelper):
         return 'TinyDB'
 
     def query_of_user(self, user=None):
-        sids = self.acls.sids_of(user)
         query = Query()
+        # 超级管理员全部权限
+        if user.is_admin:
+            return query.rid.exists()
+        sids = self.acls.sids_of(user)
 
         def check_access(aces):
             for ace in aces['def']:
