@@ -25,6 +25,7 @@ class Authenticate(Resource):
     @api.expect(credential_request)
     @api.marshal_with(token_response)
     # @cors.crossdomain(origin='*')
+    @api.doc(id='authenticate')
     def post(self):
         """
         Authenticate
@@ -47,6 +48,7 @@ class CheckToken(Resource):
 
     @api.expect(token_request)
     @api.marshal_with(token_response)
+    @api.doc(id='check_token')
     def post(self):
         """
         Check Token
@@ -65,6 +67,7 @@ class RefreshToken(Resource):
 
     @api.expect(token_request)
     @api.marshal_with(token_response)
+    @api.doc(id='refresh_token')
     def post(self):
         """
         Refresh Token
