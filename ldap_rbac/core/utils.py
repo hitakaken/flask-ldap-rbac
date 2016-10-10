@@ -137,11 +137,8 @@ def xstr(s):
 
 
 def chunk(chunks, index, default=None, mapping=None):
-    if type(chunks) is list or type(chunks) is tuple:
-        result = chunks[index] if len(chunks) > index else default
-        return result if mapping is None else mapping(result)
-    else:
-        return chunks
+    result = chunks[index] if len(chunks) > index else default
+    return result if mapping is None else mapping(result)
 
 
 def convert_string_to_integer(text, default=None):
@@ -159,9 +156,11 @@ def to_datetime(ts):
 
 
 def get_first(array, default=None):
-    if array is not None and len(array) > 0:
-        return array[0]
-    return default
+    if type(array) is list or type(array) is tuple:
+        if array is not None and len(array) > 0:
+            return array[0]
+        return default
+    return array
 
 
 
