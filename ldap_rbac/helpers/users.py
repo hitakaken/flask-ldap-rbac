@@ -77,8 +77,6 @@ class UserHelper(BaseHelper):
         )
 
     def get_role_names(self, user):
-        print 'get_role_names'
-        print user.attrs
         return user.attrs.get(constants.USER_ROLE_ASSIGN, failobj=[])
 
     def get_admin_roles(self, user):

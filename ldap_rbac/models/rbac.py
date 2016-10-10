@@ -14,7 +14,6 @@ class User(PropertiesEntity):
 
     def __init__(self, dn=None, attrs=None, helper=None):
         super(User, self).__init__(dn=dn, attrs=attrs, helper=helper)
-        self.roles = []
 
     def fill(self):
         if 'cn' not in self.attrs:
