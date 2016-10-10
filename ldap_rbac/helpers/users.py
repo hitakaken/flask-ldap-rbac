@@ -25,9 +25,9 @@ class UserHelper(BaseHelper):
             return None if constants.OPENLDAP_POLICY_SUBENTRY not in user.attrs \
                 else utils.rdn(user.attrs[constants.OPENLDAP_POLICY_SUBENTRY][0])
         elif attr_name == 'roles':
-            return self.get_role_names(user=user)
+            return self.get_role_names(user)
         elif attr_name == 'is_admin':
-            return constants.ROLE_NAME_ADMIN in self.get_role_names(user=user)
+            return constants.ROLE_NAME_ADMIN in self.get_role_names(user)
         else:
             return super(UserHelper, self).getattr(user, attr_name)
 
