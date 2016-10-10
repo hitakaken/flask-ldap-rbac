@@ -71,13 +71,13 @@ class UserHelper(BaseHelper):
         pass
 
     def get_roles(self, user):
-        return [] if constants.USER_ROLE_ASSIGN not in user.attrs else map(
+        return map(
             lambda raw_data: UserRole(user=user, raw_data=raw_data),
-            user.attrs[constants.USER_ROLE_DATA]
+            user.attrs.get(constants.USER_ROLE_DATA, [])
         )
 
     def get_role_names(self, user):
-        return [] if constants.USER_ROLE_ASSIGN not in user.attrs else user.attrs[constants.USER_ROLE_ASSIGN]
+        return user.attrs.get(constants.USER_ROLE_ASSIGN, [])
 
     def get_admin_roles(self, user):
         pass
