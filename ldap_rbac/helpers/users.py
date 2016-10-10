@@ -73,11 +73,13 @@ class UserHelper(BaseHelper):
     def get_roles(self, user):
         return map(
             lambda raw_data: UserRole(user=user, raw_data=raw_data),
-            user.attrs.get(constants.USER_ROLE_DATA, [])
+            user.attrs.get(constants.USER_ROLE_DATA, failobj=[])
         )
 
     def get_role_names(self, user):
-        return user.attrs.get(constants.USER_ROLE_ASSIGN, [])
+        print 'get_role_names'
+        print user.attrs
+        return user.attrs.get(constants.USER_ROLE_ASSIGN, failobj=[])
 
     def get_admin_roles(self, user):
         pass
