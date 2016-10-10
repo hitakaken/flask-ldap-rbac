@@ -79,7 +79,7 @@ class UserHelper(BaseHelper):
     def get_role_names(self, user):
         return [] if constants.USER_ROLE_ASSIGN not in user.attrs else user.attrs[constants.USER_ROLE_ASSIGN]
 
-    def get_admin_roles(self,user):
+    def get_admin_roles(self, user):
         pass
 
     def check_password(self, user, password):
