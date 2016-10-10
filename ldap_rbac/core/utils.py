@@ -137,8 +137,11 @@ def xstr(s):
 
 
 def chunk(chunks, index, default=None, mapping=None):
-    result = chunks[index] if len(chunks) > index else default
-    return result if mapping is None else mapping(result)
+    if type(chunks) is list or type(chunks) is tuple:
+        result = chunks[index] if len(chunks) > index else default
+        return result if mapping is None else mapping(result)
+    else:
+        return chunks
 
 
 def convert_string_to_integer(text, default=None):
