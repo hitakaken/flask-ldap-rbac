@@ -65,9 +65,7 @@ class TokenHelper(object):
                 return self.load_user_from_token(request.headers.get(self.token_header))
             if self.token_header in request.cookies:
                 return self.load_user_from_token(request.cookies.get(self.token_header))
-        except exceptions.TOKEN_EXPIRED:
-            return None
-        except exceptions.TOKEN_DECODE_ERROR:
+        except exceptions.SecurityException:
             return None
         return None
 
