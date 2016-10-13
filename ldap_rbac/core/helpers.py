@@ -137,7 +137,7 @@ class LdapConnection(object):
 
     def find_by_iid(self, base_dn, iid):
         try:
-            result = self.conn.search(base_dn, ldap.SCOPE_SUBTREE, '(%s=%s)' % (constants.FT_IID, iid))
+            result = self.conn.search_s(base_dn, ldap.SCOPE_SUBTREE, '(%s=%s)' % (constants.FT_IID, iid))
         except ldap.NO_SUCH_OBJECT:
             return None
         if result is not None and len(result) > 0:
