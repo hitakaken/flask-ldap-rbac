@@ -135,6 +135,17 @@ class LdapConnection(object):
         else:
             return None
 
+    def find_by_iid(self, base_dn, iid):
+        try:
+            result = self.conn.search(base_dn, ldap.SCOPE_SUBTREE, '(%s=%s)' % (constants.FT_IID, iid))
+        except ldap.NO_SUCH_OBJECT:
+            return None
+        if result is not None and len(result) > 0:
+            dn, attrs = result[0]
+            return dn, cidict(dict(attrs))
+        else:
+            return None
+
     def find_all(self, base_dn, filters, limit=0, skip=0):
         """查询条目"""
         result_id = self.conn.search(base_dn, ldap.SCOPE_SUBTREE, filters)
@@ -328,6 +339,15 @@ class BaseHelper(object):
     def exists(self, entry_id):
         """判断条目是否存在"""
         return self.find_one(entry_id) is not None
+
+    def find_by_iid(self, iid):
+        result = self.ldap.find_by_iid(self.ldap.root_dn(self.entity_class()), iid)
+        if result is not None:
+            dn, attrs = result
+            result = self.instance(dn=dn, attrs=attrs)
+            result.cache()
+        return result
+
 
     def find_all(self, conditions, limit=0, skip=0):
         if conditions is None:
