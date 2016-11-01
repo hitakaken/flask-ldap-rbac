@@ -348,7 +348,6 @@ class BaseHelper(object):
             result.cache()
         return result
 
-
     def find_all(self, conditions, limit=0, skip=0):
         if conditions is None:
             filters = constants.FILTER_TRUE

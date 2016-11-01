@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # http://csrc.nist.gov/groups/SNS/rbac/documents/draft-rbac-implementation-std-v01.pdf
 # http://schd.ws/hosted_files/apachecon2016/f1/How%20I%20Built%20an%20IAM%20System%20using%20Java%20and%20Apache%20Directory%20Fortress.pdf
-from ldap_rbac.core import utils
 from ldap_rbac.core.models import LdapEntity, PropertiesEntity, Constraint
 
 
@@ -31,7 +30,7 @@ class Role(PropertiesEntity):
     """Fortress Roles"""
     ID_FIELD = 'cn'
     ROOT = 'ou=Roles,ou=RBAC'
-    OBJECT_CLASS = ['top', 'ftRls', 'ftProperties', 'ftMods']
+    OBJECT_CLASS = ['top', 'organizationalRol', 'ftRls', 'ftProperties', 'ftMods']
     PARENT = RBAC
 
     def __init__(self, dn=None, attrs=None, helper=None):
